@@ -1,0 +1,9 @@
+$ claude mcp list   (excerpt)
+aws-mcp: uvx mcp-proxy-for-aws@latest https://aws-mcp.us-east-1.api.aws/mcp --metadata INSTALL_SOURCE=aws-cli - ✔ Connected
+
+$ claude mcp get aws-mcp
+aws-mcp:
+  Scope: User config (available in all your projects)
+  Status: ✔ Connected
+
+To remove this server, run: claude mcp remove aws-mcp -s user

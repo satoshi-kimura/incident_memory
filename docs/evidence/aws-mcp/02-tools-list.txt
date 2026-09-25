@@ -1,0 +1,10 @@
+$ python mcp_list_tools.py   # 2026-09-25T15:51:01Z
+SERVER MCP Proxy for AWS 1.7.0
+TOOL aws___get_presigned_url - Generate pre-signed S3 URLs for uploading or downloading files. Use BEFORE run_script when an operation requir
+TOOL aws___get_tasks - Poll status of long-running tasks. Use after a tool call returns task_id with status "working". Up to 3 IDs pe
+TOOL aws___run_script - Execute Python code in sandboxed environment with AWS API access via `call_boto3`. No network except `call_bot
+TOOL aws___get_regional_availability - AWS resource availability per region.
+TOOL aws___list_regions - Retrieve a list of all AWS regions.
+TOOL aws___read_documentation - Fetch full AWS doc pages as markdown. `search_documentation` already returns verbatim page chunks, so don't re
+TOOL aws___retrieve_skill - Retrieve an AWS skill (workflows, references). Returns SKILL.md, or `file` if given.
+TOOL aws___search_documentation - AWS docs search. Each result's `context` is verbatim page text -- a real chunk of the actual page, not a short

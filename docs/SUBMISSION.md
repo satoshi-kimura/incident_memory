@@ -62,7 +62,8 @@ knowledge lives in one or two people's heads.
 
 ## How it was built
 
-- **Coding agent:** Claude Code (Anthropic), connected to the AWS account. It designed the
+- **Coding agent:** Claude Code (Anthropic), connected to the AWS account through the **Agent Toolkit for AWS**
+  (AWS MCP Server + AWS skills). Proof: [evidence/AWS_CONNECTION.md](evidence/AWS_CONNECTION.md). It designed the
   data model and similarity algorithm, wrote the backend, frontend and Terraform, ran the
   Terraform plan and inspected it for changes to unrelated resources, deployed, ran the
   controlled incident scenarios, and captured evidence.
@@ -92,7 +93,8 @@ knowledge lives in one or two people's heads.
 ## Checklist before submitting
 
 - [ ] Live URL reachable from a clean browser (no login)
-- [ ] Proof of coding-agent connection to AWS attached (see DEVELOPMENT_LOG.md, section *Connection proof*)
+- [x] Proof of coding-agent connection to AWS documented: evidence/AWS_CONNECTION.md (MCP config, tool list, read-only call, CloudTrail events)
+- [ ] Screenshot of Claude Code `/mcp` showing aws-mcp connected (evidence/screenshots/05-claude-code-aws-mcp.png)
 - [x] Screenshots captured (docs/evidence/screenshots): attach them to the Builder Center page
 - [x] Architecture diagram ready (docs/architecture.png): attach it to the Builder Center page
 - [ ] Tags: `#commercial-potential`, `#startups`
