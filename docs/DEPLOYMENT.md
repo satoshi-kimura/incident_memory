@@ -1,5 +1,7 @@
 # Deployment
 
+**Current deployment:** https://d2zs12dmk7373h.cloudfront.net (`app_url` output of `terraform output`)
+
 Everything deploys to **us-east-1** with Terraform. The Terraform state is dedicated to
 Incident Memory (`s3://incident-memory-tfstate-<account>`), separate from any other
 project's state.

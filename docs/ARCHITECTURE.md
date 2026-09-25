@@ -1,5 +1,7 @@
 # Architecture
 
+**Live app:** https://d2zs12dmk7373h.cloudfront.net (CloudFront → S3 + API Gateway → Lambda, us-east-1)
+
 ![Architecture](architecture.png)
 
 Incident Memory is a small serverless application in **us-east-1** (CloudFront is global).

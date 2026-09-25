@@ -4,6 +4,8 @@ Built with **Claude Code** (Anthropic's coding agent, CLI), working in the devel
 terminal with access to the AWS account through the AWS CLI and Terraform. Times are UTC.
 The account ID is masked as `<ACCOUNT_ID>`.
 
+**Live app:** https://d2zs12dmk7373h.cloudfront.net
+
 ## Connection proof
 
 See **[AWS_CONNECTION.md](AWS_CONNECTION.md)**. It covers the Agent Toolkit for AWS (AWS MCP Server +

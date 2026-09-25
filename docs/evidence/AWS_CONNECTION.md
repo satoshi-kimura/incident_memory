@@ -2,6 +2,7 @@
 
 Rule: *"A coding agent connected to the AWS console, with documented proof of the connection."*
 
+**Live app:** https://d2zs12dmk7373h.cloudfront.net (public, no login, deployed on AWS us-east-1)
 **Coding agent:** Claude Code (Anthropic).
 **Connection:** Agent Toolkit for AWS. It provides the **AWS MCP Server**
 (`https://aws-mcp.us-east-1.api.aws/mcp`, through `mcp-proxy-for-aws`) plus the AWS agent skills
