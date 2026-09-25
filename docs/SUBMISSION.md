@@ -94,7 +94,7 @@ knowledge lives in one or two people's heads.
 
 - [ ] Live URL reachable from a clean browser (no login)
 - [x] Proof of coding-agent connection to AWS documented: evidence/AWS_CONNECTION.md (MCP config, tool list, read-only call, CloudTrail events)
-- [x] Screenshots of the agent calling aws-mcp (evidence/screenshots/05-agent-calling-aws-mcp.png, 06-agent-called-aws-mcp.png)
+- [x] Screenshots of the agent calling aws-mcp (evidence/screenshots/05-agent-calling-aws-mcp.png, 06-agent-called-aws-mcp.png) and the `/mcp` panel (07-claude-code-mcp-aws-connected.png)
 - [x] Screenshots captured (docs/evidence/screenshots): attach them to the Builder Center page
 - [x] Architecture diagram ready (docs/architecture.png): attach it to the Builder Center page
 - [ ] Tags: `#commercial-potential`, `#startups`

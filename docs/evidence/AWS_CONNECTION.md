@@ -69,4 +69,6 @@ incident scenarios, and verified the live app. Terraform plan and apply outputs 
       with the previous call's result (`user/sandbox`, Incident Memory Lambda functions, table and alarms) above it
 - [x] `screenshots/06-agent-called-aws-mcp.png`: the agent making two more **aws-mcp** calls (CloudTrail lookups) in the same session
 
+- [x] `screenshots/07-claude-code-mcp-aws-connected.png`: Claude Code's `/mcp` panel showing **aws-mcp ✔ (8 tools)** as a user MCP server
+
 Screenshots are cropped to the Claude Code window only, so that no other project's information appears.
