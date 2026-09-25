@@ -63,7 +63,10 @@ See [DEVELOPMENT_LOG.md](DEVELOPMENT_LOG.md). The agent verified the AWS identit
 model access, ran every Terraform plan through the safety gate and applied it, ran the controlled
 incident scenarios, and verified the live app. Terraform plan and apply outputs are in this folder.
 
-## Screenshot to attach (taken by the submitter)
+## Screenshots
 
-- [ ] `screenshots/05-agent-aws-mcp-call.png`: the Claude Code turn showing the `aws-mcp - aws___run_script` call and its result
-- [ ] `screenshots/06-claude-code-aws-mcp.png`: Claude Code's `/mcp` panel showing **aws-mcp ✔ connected**
+- [x] `screenshots/05-agent-calling-aws-mcp.png`: the Claude Code session while the agent is **calling aws-mcp**,
+      with the previous call's result (`user/sandbox`, Incident Memory Lambda functions, table and alarms) above it
+- [x] `screenshots/06-agent-called-aws-mcp.png`: the agent making two more **aws-mcp** calls (CloudTrail lookups) in the same session
+
+Screenshots are cropped to the Claude Code window only, so that no other project's information appears.
