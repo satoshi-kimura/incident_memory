@@ -1,0 +1,13 @@
+.venv/
+__pycache__/
+*.pyc
+.build/
+infra/.terraform/
+infra/*.tfstate*
+infra/terraform.tfvars
+*.zip
+.env
+.DS_Store
+infra/backend.hcl
+infra/tfplan
+infra/plan.txt

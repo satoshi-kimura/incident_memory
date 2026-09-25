@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Incident Memory</title>
+  <meta name="description" content="Incident Memory turns AWS incidents into structured memories and shows what happened last time a similar pattern occurred.">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%232a78d6' stroke-width='2.2' stroke-linecap='round'%3E%3Cpath d='M3 12h4l3-7 4 14 3-7h4'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <a class="brand" href="#/">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12h4l3-7 4 14 3-7h4"/></svg>
+        Incident Memory
+      </a>
+      <span class="tagline">Your infrastructure remembers what happened last time.</span>
+      <span class="env-pill" title="All AWS access is read-only and limited to the isolated demo workload.">Demo environment · us-east-1 · read-only</span>
+    </div>
+  </header>
+  <main id="app"><p class="skeleton">Loading…</p></main>
+  <footer>
+    Incident Memory is a hackathon demo. Live incidents come from a controlled demo workload in AWS;
+    SEEDED_DEMO incidents are fictional history. Similarity scores are calculated by the application, not by AI.
+  </footer>
+  <div class="tooltip" id="tooltip" role="tooltip"></div>
+  <script src="app.js"></script>
+</body>
+</html>

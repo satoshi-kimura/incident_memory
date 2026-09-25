@@ -1,0 +1,144 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 760" width="1200" height="760" font-family="Inter, -apple-system, Segoe UI, Helvetica, Arial, sans-serif">
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#52514e"/>
+    </marker>
+    <marker id="arrowBlue" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#2a78d6"/>
+    </marker>
+    <style>
+      .box { fill: #ffffff; stroke: #c9c8c2; stroke-width: 1.5; rx: 8; }
+      .svc { font-size: 15px; font-weight: 650; fill: #0b0b0b; }
+      .sub { font-size: 12px; fill: #52514e; }
+      .tiny { font-size: 11px; fill: #75746f; }
+      .zone { fill: none; stroke-width: 1.5; stroke-dasharray: 6 5; rx: 12; }
+      .zlabel { font-size: 12px; font-weight: 700; letter-spacing: .06em; }
+      .edge { stroke: #52514e; stroke-width: 1.6; fill: none; marker-end: url(#arrow); }
+      .edgeB { stroke: #2a78d6; stroke-width: 2; fill: none; marker-end: url(#arrowBlue); }
+      .elabel { font-size: 11.5px; fill: #52514e; }
+    </style>
+  </defs>
+
+  <rect width="1200" height="760" fill="#f6f6f4"/>
+  <text x="40" y="44" font-size="22" font-weight="700" fill="#0b0b0b">Incident Memory — architecture</text>
+  <text x="40" y="68" font-size="13" fill="#52514e">Serverless, us-east-1 (CloudFront global). Read-only toward operational resources; writes only its own Incident Memory table.</text>
+
+  <!-- zones -->
+  <rect class="zone" x="210" y="96" width="660" height="330" stroke="#2a78d6"/>
+  <text class="zlabel" x="228" y="118" fill="#2a78d6">INCIDENT MEMORY APPLICATION</text>
+  <rect class="zone" x="210" y="452" width="660" height="280" stroke="#eb6834"/>
+  <text class="zlabel" x="228" y="474" fill="#c4521f">ISOLATED DEMO ENVIRONMENT (allowlisted)</text>
+  <rect class="zone" x="900" y="96" width="270" height="636" stroke="#9a998f"/>
+  <text class="zlabel" x="918" y="118" fill="#75746f">AWS OBSERVABILITY &amp; AI</text>
+
+  <!-- user -->
+  <rect class="box" x="30" y="200" width="150" height="80"/>
+  <text class="svc" x="48" y="232">Judge / engineer</text>
+  <text class="sub" x="48" y="252">Browser, no login,</text>
+  <text class="sub" x="48" y="268">no AWS credentials</text>
+
+  <!-- CloudFront -->
+  <rect class="box" x="235" y="140" width="190" height="84"/>
+  <text class="svc" x="252" y="170">Amazon CloudFront</text>
+  <text class="sub" x="252" y="190">HTTPS URL, security headers</text>
+  <text class="sub" x="252" y="206">/api/* → API · /* → S3</text>
+
+  <!-- S3 -->
+  <rect class="box" x="235" y="300" width="190" height="84"/>
+  <text class="svc" x="252" y="330">Amazon S3</text>
+  <text class="sub" x="252" y="350">Static UI (HTML/JS/CSS)</text>
+  <text class="sub" x="252" y="366">Private, OAC only</text>
+
+  <!-- API GW -->
+  <rect class="box" x="460" y="140" width="180" height="84"/>
+  <text class="svc" x="477" y="170">API Gateway</text>
+  <text class="sub" x="477" y="190">HTTP API, 4 fixed routes</text>
+  <text class="sub" x="477" y="206">Throttled (analyze: 1 rps)</text>
+
+  <!-- Lambda API -->
+  <rect class="box" x="460" y="266" width="180" height="138" style="stroke:#2a78d6;stroke-width:2"/>
+  <text class="svc" x="477" y="296">AWS Lambda</text>
+  <text class="sub" x="477" y="314">incident-memory-api</text>
+  <text class="tiny" x="477" y="336">1 Collect evidence (allowlist)</text>
+  <text class="tiny" x="477" y="352">2 Signals + timeline</text>
+  <text class="tiny" x="477" y="368">3 Deterministic similarity</text>
+  <text class="tiny" x="477" y="384">4 AI explanation (async, cached)</text>
+
+  <!-- DynamoDB -->
+  <rect class="box" x="675" y="266" width="180" height="138"/>
+  <text class="svc" x="692" y="296">Amazon DynamoDB</text>
+  <text class="sub" x="692" y="314">incident-memory-incidents</text>
+  <text class="tiny" x="692" y="336">Incident Memories</text>
+  <text class="tiny" x="692" y="352">AI results by evidence</text>
+  <text class="tiny" x="692" y="368">fingerprint (SHA-256)</text>
+  <text class="tiny" x="692" y="384">Daily Bedrock call counter</text>
+
+  <!-- CloudWatch logs (own) -->
+  <rect class="box" x="675" y="140" width="180" height="84"/>
+  <text class="svc" x="692" y="170">CloudWatch Logs</text>
+  <text class="sub" x="692" y="190">App logs + EMF metrics</text>
+  <text class="sub" x="692" y="206">errors, durations, failures</text>
+
+  <!-- Observability column -->
+  <rect class="box" x="920" y="140" width="230" height="96"/>
+  <text class="svc" x="937" y="170">Amazon CloudWatch</text>
+  <text class="sub" x="937" y="190">DescribeAlarms/AlarmHistory</text>
+  <text class="sub" x="937" y="206">(demo alarm ARNs only)</text>
+  <text class="sub" x="937" y="222">GetMetricData (AWS/Lambda)</text>
+
+  <rect class="box" x="920" y="262" width="230" height="84"/>
+  <text class="svc" x="937" y="292">AWS CloudTrail</text>
+  <text class="sub" x="937" y="312">LookupEvents (event history)</text>
+  <text class="sub" x="937" y="328">demo resource name only</text>
+
+  <rect class="box" x="920" y="372" width="230" height="96"/>
+  <text class="svc" x="937" y="402">Amazon Bedrock</text>
+  <text class="sub" x="937" y="422">Converse API, configurable model</text>
+  <text class="sub" x="937" y="438">Structured JSON output,</text>
+  <text class="sub" x="937" y="454">validated against evidence</text>
+
+  <!-- Demo env -->
+  <rect class="box" x="235" y="500" width="200" height="96"/>
+  <text class="svc" x="252" y="530">Lambda (demo)</text>
+  <text class="sub" x="252" y="550">incident-memory-demo-</text>
+  <text class="sub" x="252" y="566">orders-api</text>
+  <text class="tiny" x="252" y="584">simulated downstream DB</text>
+
+  <rect class="box" x="470" y="500" width="200" height="96"/>
+  <text class="svc" x="487" y="530">CloudWatch alarms</text>
+  <text class="sub" x="487" y="550">latency / errors / throttles</text>
+  <text class="tiny" x="487" y="570">on AWS/Lambda metrics</text>
+  <text class="tiny" x="487" y="584">of the demo function</text>
+
+  <rect class="box" x="235" y="624" width="200" height="90"/>
+  <text class="svc" x="252" y="654">Lambda (scenario)</text>
+  <text class="sub" x="252" y="674">Controlled incident generator</text>
+  <text class="tiny" x="252" y="692">Not public · manual or weekly</text>
+
+  <rect class="box" x="470" y="624" width="200" height="90"/>
+  <text class="svc" x="487" y="654">EventBridge rule</text>
+  <text class="sub" x="487" y="674">Weekly partial scenario</text>
+  <text class="tiny" x="487" y="692">keeps live evidence fresh</text>
+
+  <text class="tiny" x="700" y="560">Real CloudTrail change events</text>
+  <text class="tiny" x="700" y="576">and real Lambda metrics are the</text>
+  <text class="tiny" x="700" y="592">evidence for live demo incidents.</text>
+
+  <!-- edges -->
+  <path class="edgeB" d="M180,240 L235,195"/>
+  <path class="edge" d="M330,224 L330,300"/>
+  <text class="elabel" x="338" y="268">static</text>
+  <path class="edgeB" d="M425,182 L460,182"/>
+  <path class="edgeB" d="M550,224 L550,266"/>
+  <path class="edge" d="M640,335 L675,335"/>
+  <path class="edge" d="M615,266 L690,224"/>
+  <path class="edgeB" d="M640,280 L672,245 L885,245 L920,190"/>
+  <path class="edgeB" d="M885,245 L885,304 L920,304"/>
+  <path class="edgeB" d="M885,304 L885,420 L920,420"/>
+  <text class="elabel" x="690" y="238">read-only · normalized evidence</text>
+
+  <path class="edge" d="M335,624 L335,596"/>
+  <text class="elabel" x="342" y="614">load + config change</text>
+  <path class="edge" d="M470,669 L435,669"/>
+  <path class="edge" d="M435,548 L470,548"/>
+</svg>

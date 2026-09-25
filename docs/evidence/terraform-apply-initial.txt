@@ -1,0 +1,8 @@
+Apply complete! Resources: 40 added, 0 changed, 0 destroyed.
+
+Outputs:
+
+api_endpoint = "https://1h0tckvcwd.execute-api.us-east-1.amazonaws.com"
+app_url = "https://d2zs12dmk7373h.cloudfront.net"
+scenario_function = "incident-memory-demo-scenario"
+table_name = "incident-memory-incidents"
