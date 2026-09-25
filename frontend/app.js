@@ -471,20 +471,22 @@ function compareChart(cur, top) {
   const all = [...curEvents, ...histEvents].map((e) => e.x);
   if (!all.length) return `<p class="muted">Not enough timed events to compare.</p>`;
   const maxX = Math.max(5, Math.ceil(Math.max(...all) / 5) * 5);
-  const W = 900, H = 170, left = 150, right = 20;
+  const W = 900, H = 230, left = 150, right = 20;
   const sx = (x) => left + (x / maxX) * (W - left - right);
   const lane = (y, events, color, label) => {
     const sorted = [...events].sort((a, b) => a.x - b.x);
-    const rightEdge = { top: -Infinity, bottom: -Infinity };  // label collision avoidance per row
+    // label collision avoidance: up to four label rows per lane (two above, two below)
+    const tiers = [["top", -12], ["bottom", 24], ["top2", -26], ["bottom2", 38]];
+    const rightEdge = Object.fromEntries(tiers.map(([k]) => [k, -Infinity]));
     return `<text x="0" y="${y + 4}" font-size="12" fill="var(--text-2)">${esc(label)}</text>
       <line x1="${left}" x2="${W - right}" y1="${y}" y2="${y}" stroke="var(--border)"/>
       ${sorted.map((e) => {
         const x = sx(e.x);
         const name = shortToken(e.t);
-        const half = name.length * 3.3;  // approx. half label width at 11px
-        const side = x - half > rightEdge.top + 6 ? "top" : x - half > rightEdge.bottom + 6 ? "bottom" : "top";
+        const half = name.length * 3.4;  // approx. half label width at 11px
+        const [side, dy] = tiers.find(([k]) => x - half > rightEdge[k] + 6) || tiers[0];
         rightEdge[side] = x + half;
-        const ty = side === "top" ? y - 12 : y + 26;
+        const ty = y + dy;
         const note = e.next ? " · happened next last time" : e.onlyHist ? ` · only in ${top.incident_id}` : "";
         return `<g class="cmp-pt" data-tip="${esc(`${name} · +${e.x} min${note}`)}">
           <circle cx="${x}" cy="${y}" r="10" fill="transparent"/>
@@ -498,8 +500,8 @@ function compareChart(cur, top) {
   return `<svg viewBox="0 0 ${W} ${H}" width="100%" style="min-width:640px" role="img" aria-label="Event sequence comparison">
     ${ticks.map((t) => `<line x1="${sx(t)}" x2="${sx(t)}" y1="20" y2="${H - 22}" stroke="var(--border)" stroke-dasharray="2 3" opacity=".6"/>
       <text x="${sx(t)}" y="${H - 6}" font-size="11" text-anchor="middle" fill="var(--text-3)">+${t}m</text>`).join("")}
-    ${lane(52, curEvents, "var(--series-1)", "This incident")}
-    ${lane(112, histEvents, "var(--series-2)", top.incident_id)}
+    ${lane(58, curEvents, "var(--series-1)", "This incident")}
+    ${lane(152, histEvents, "var(--series-2)", top.incident_id)}
   </svg>`;
 }
 
