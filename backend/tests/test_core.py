@@ -21,16 +21,16 @@ def sig(off, metric, direction="up", service="Lambda", rtype="lambda:function"):
 
 
 def current_memory(with_change=True):
-    """Early-stage live incident: config change -> duration up -> concurrency up -> latency alarm."""
+    """Live demo pattern: Lambda configuration change -> errors up -> duration up -> concurrency up -> latency alarm."""
     m = {
         "id": "INC-TEST",
-        "status": "OPEN",
-        "trigger": {"service": "Lambda", "metric": "Duration", "comparison": "GreaterThanThreshold", "ts": at(6)},
+        "status": "RECOVERED",
+        "trigger": {"service": "Lambda", "metric": "Duration", "comparison": "GreaterThanThreshold", "ts": at(8)},
         "changes": [{"ts": at(0), "change_category": "configuration", "service": "Lambda", "resource": FN,
                      "resource_type": "lambda:function", "event_name": "UpdateFunctionConfiguration20150331v2",
                      "evidence_id": "CT-001"}] if with_change else [],
-        "signals": [sig(2, "Duration"), sig(4, "ConcurrentExecutions")],
-        "timeline": [{"ts": at(6), "category": "alarm", "alarm_token": "alarm:Lambda.Duration"}],
+        "signals": [sig(2, "Errors"), sig(4, "Duration"), sig(6, "ConcurrentExecutions")],
+        "timeline": [{"ts": at(8), "category": "alarm", "alarm_token": "alarm:Lambda.Duration"}],
     }
     m["pattern"] = build_pattern(m)
     return m
@@ -45,17 +45,24 @@ class SimilarityTest(unittest.TestCase):
         for r in res["matches"]:
             self.assertGreaterEqual(r["score"], MATCH_THRESHOLD)
 
-    def test_next_events_reports_errors_after_alarm(self):
+    def test_next_events_reports_errors_alarm_after_latency_alarm(self):
         top = find_similar(current_memory(), sample_memories())["matches"][0]
         nxt = {e["token"]: e for e in top["next_events"]}
-        self.assertIn("Lambda.Errors:up", nxt)
-        self.assertEqual(nxt["Lambda.Errors:up"]["minutes_after_state"], 4)
+        self.assertIn("alarm:Lambda.Errors", nxt)
+        self.assertEqual(nxt["alarm:Lambda.Errors"]["minutes_after_state"], 3)
 
     def test_reasons_name_differences(self):
         top = find_similar(current_memory(), sample_memories())["matches"][0]
         reasons = {b["factor"]: b["reason"] for b in top["breakdown"]}
-        self.assertIn("RDS parameter group", reasons["change"])
+        self.assertIn("SSM parameter", reasons["change"])
         self.assertIn("only in the historical incident", reasons["resources"])
+        self.assertTrue(any(d.startswith("Different change target: Lambda function configuration")
+                            for d in top["differences"]), top["differences"])
+
+    def test_shared_pattern_is_change_errors_latency_alarm(self):
+        top = find_similar(current_memory(), sample_memories())["matches"][0]
+        self.assertEqual(top["shared_sequence"][:4], ["change:configuration", "Lambda.Errors:up",
+                                                      "Lambda.Duration:up", "Lambda.ConcurrentExecutions:up"])
 
     def test_score_is_deterministic(self):
         cur, hist = current_memory()["pattern"], sample_memories()[0]["pattern"]

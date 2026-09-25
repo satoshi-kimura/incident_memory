@@ -40,9 +40,10 @@ resource "aws_lambda_function" "demo_orders_api" {
   timeout          = 5
   environment {
     variables = {
-      DB_POOL_SIZE       = "20"
-      RELEASE_VERSION    = "v2.13"
-      RELEASE_APPLIED_AT = "0"
+      DOWNSTREAM_TIMEOUT_MS = "3000"
+      MAX_RETRIES           = "0"
+      RELEASE_VERSION       = "v2.13"
+      RELEASE_APPLIED_AT    = "0"
     }
   }
   # The scenario generator changes the configuration at runtime; those changes are the
@@ -77,14 +78,14 @@ resource "aws_cloudwatch_metric_alarm" "latency" {
 
 resource "aws_cloudwatch_metric_alarm" "errors" {
   alarm_name          = local.alarm_names.errors
-  alarm_description   = "Demo: orders-api errors above 5 per minute"
+  alarm_description   = "Demo: orders-api errors above 10 per minute"
   namespace           = "AWS/Lambda"
   metric_name         = "Errors"
   dimensions          = { FunctionName = local.demo_fn }
   statistic           = "Sum"
   period              = 60
   evaluation_periods  = 1
-  threshold           = 5
+  threshold           = 10
   comparison_operator = "GreaterThanThreshold"
   treat_missing_data  = "notBreaching"
 }

@@ -178,6 +178,7 @@ def build_pattern(memory):
         "preceding_change": pre["change_category"] if pre else "none",
         # Informational only (explains differences; not part of the score)
         "preceding_change_resource": pre.get("resource_type") if pre else None,
+        "preceding_change_target": change_target(pre) if pre and pre.get("resource_type") else None,
     }
 
 
@@ -185,6 +186,7 @@ RESOURCE_TYPE_NAMES = {
     "lambda:function": "Lambda function",
     "rds:db": "RDS database",
     "rds:db-parameter-group": "RDS parameter group",
+    "rds:db-proxy": "RDS Proxy",
     "dynamodb:table": "DynamoDB table",
     "ssm:parameter": "SSM parameter",
 }
@@ -192,6 +194,45 @@ RESOURCE_TYPE_NAMES = {
 
 def describe_resource_type(rtype):
     return RESOURCE_TYPE_NAMES.get(rtype, rtype)
+
+
+def change_target(change):
+    """What a change modified, in words (e.g. "Lambda function configuration")."""
+    return change.get("target") or f"{describe_resource_type(change['resource_type'])} {change['change_category']}"
+
+
+def renumber_evidence(memory):
+    """Renumber evidence IDs so that, per prefix (CT-, CW-), they follow time order.
+
+    Every reference (timeline, signals, changes, trigger, causes, resolution) is remapped.
+    """
+    def when(e):
+        return e.get("ts") or e.get("onset") or ""
+
+    mapping = {}
+    for prefix in ("CT", "CW"):
+        items = [e for e in memory.get("evidence", []) if e["id"].startswith(prefix + "-")]
+        for n, e in enumerate(sorted(items, key=when), 1):  # sorted() is stable for ties
+            mapping[e["id"]] = f"{prefix}-{n:03d}"
+    remap = lambda i: mapping.get(i, i)
+
+    for e in memory.get("evidence", []):
+        e["id"] = remap(e["id"])
+    memory.get("evidence", []).sort(key=lambda e: (e["id"][:2], e["id"]))
+    for e in memory.get("timeline", []):
+        e["evidence_id"] = remap(e.get("evidence_id")) if e.get("evidence_id") else e.get("evidence_id")
+    for s in memory.get("signals", []):
+        s["evidence_ids"] = [remap(i) for i in s.get("evidence_ids", [])]
+    for c in memory.get("changes", []):
+        c["evidence_id"] = remap(c["evidence_id"])
+    trig = memory.get("trigger") or {}
+    if trig.get("trigger_evidence_id"):
+        trig["trigger_evidence_id"] = remap(trig["trigger_evidence_id"])
+    for c in memory.get("suspected_causes", []):
+        c["supporting_evidence"] = [remap(i) for i in c["supporting_evidence"]]
+    if memory.get("resolution"):
+        memory["resolution"]["supporting_evidence"] = [remap(i) for i in memory["resolution"].get("supporting_evidence", [])]
+    return memory
 
 
 def describe_token(token):
@@ -220,5 +261,6 @@ def summary_row(memory):
         "trigger": {"alarm_name": trigger.get("alarm_name"), "alarm_category": trigger.get("alarm_category"),
                     "metric": trigger.get("metric"), "service": trigger.get("service")},
         "analyzed_at": analysis.get("analyzed_at"),
-        "best_match": {"id": top[0]["incident_id"], "score": top[0]["score"]} if top else None,
+        "best_match": {"id": top[0]["incident_id"], "score": top[0]["score"],
+                       "shared_sequence": top[0].get("shared_sequence", [])} if top else None,
     }

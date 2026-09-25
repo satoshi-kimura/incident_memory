@@ -32,7 +32,10 @@ class PipelineTest(unittest.TestCase):
         status, m = self.call("POST", f"/api/incidents/{new[0]['id']}/analyze")
         self.assertEqual(status, 200)
         self.assertEqual(m["source_type"], "LIVE_DEMO")
-        self.assertEqual([s["metric"] for s in m["signals"]], ["Duration", "ConcurrentExecutions"])
+        by_onset = [s["metric"] for s in sorted(m["signals"], key=lambda s: s["onset"])]
+        self.assertEqual(by_onset, ["Errors", "Duration", "ConcurrentExecutions"])
+        self.assertEqual(m["status"], "RECOVERED")
+        self.assertEqual(m["title"], "Orders API latency after Lambda configuration change")
         self.assertEqual(m["changes"][0]["evidence_id"], "CT-001")
         self.assertEqual(m["analysis"]["similar"][0]["incident_id"], "INC-0012")
         self.assertEqual(m["analysis"]["ai_status"], "UNAVAILABLE")

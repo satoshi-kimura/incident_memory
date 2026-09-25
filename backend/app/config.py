@@ -16,7 +16,7 @@ BEDROCK_MODEL_ID = os.environ.get("BEDROCK_MODEL_ID", "anthropic.claude-opus-5")
 BEDROCK_CLIENT = os.environ.get("BEDROCK_CLIENT", "mantle")  # "mantle" | "invoke" | "converse" | "disabled"
 BEDROCK_DAILY_CALL_LIMIT = int(os.environ.get("BEDROCK_DAILY_CALL_LIMIT", "100"))
 BEDROCK_TIMEOUT_SECONDS = float(os.environ.get("BEDROCK_TIMEOUT_SECONDS", "90"))
-PROMPT_VERSION = "2026-09-25.2"
+PROMPT_VERSION = "2026-09-26.1"
 
 # Evidence collection results are reused for this long to protect AWS API quotas.
 COLLECTION_CACHE_SECONDS = int(os.environ.get("COLLECTION_CACHE_SECONDS", "60"))

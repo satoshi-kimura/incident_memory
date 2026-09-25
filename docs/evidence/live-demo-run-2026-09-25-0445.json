@@ -1,0 +1,950 @@
+{
+ "id": "INC-20260925-0445",
+ "title": "Orders API latency after configuration change",
+ "source_type": "LIVE_DEMO",
+ "status": "OPEN",
+ "created_at": "2026-09-25T04:56:16Z",
+ "started_at": "2026-09-25T04:45:48Z",
+ "ended_at": "2026-09-25T04:55:48Z",
+ "region": "us-east-1",
+ "trigger": {
+  "alarm_name": "incident-memory-demo-orders-api-latency-high",
+  "ts": "2026-09-25T04:45:48Z",
+  "service": "Lambda",
+  "metric": "Duration",
+  "alarm_category": "latency",
+  "comparison": "GreaterThanThreshold",
+  "threshold": 1000.0,
+  "value": 1291.2039583333333,
+  "unit": "Milliseconds",
+  "trigger_evidence_id": "CW-003"
+ },
+ "timeline": [
+  {
+   "evidence_id": "CT-001",
+   "ts": "2026-09-25T04:38:01Z",
+   "service": "Lambda",
+   "category": "change",
+   "description": "UpdateFunctionConfiguration on incident-memory-demo-orders-api (configuration change)",
+   "source": "CloudTrail"
+  },
+  {
+   "evidence_id": "CW-001",
+   "ts": "2026-09-25T04:41:00Z",
+   "service": "Lambda",
+   "category": "metric",
+   "description": "Duration increased from 87 ms to 2,251 ms (26.0x baseline)",
+   "source": "CloudWatch"
+  },
+  {
+   "evidence_id": "CW-002",
+   "ts": "2026-09-25T04:43:00Z",
+   "service": "Lambda",
+   "category": "metric",
+   "description": "ConcurrentExecutions increased from 1 to 2 (2.0x baseline)",
+   "source": "CloudWatch"
+  },
+  {
+   "evidence_id": "CW-003",
+   "ts": "2026-09-25T04:45:48Z",
+   "service": "Lambda",
+   "category": "alarm",
+   "description": "Alarm incident-memory-demo-orders-api-latency-high entered ALARM (Duration 1,291 ms, threshold 1,000 ms)",
+   "source": "CloudWatch",
+   "alarm_token": "alarm:Lambda.Duration"
+  },
+  {
+   "evidence_id": "CW-004",
+   "ts": "2026-09-25T04:55:48Z",
+   "service": "Lambda",
+   "category": "recovery",
+   "description": "Alarm incident-memory-demo-orders-api-latency-high returned to OK",
+   "source": "CloudWatch"
+  }
+ ],
+ "signals": [
+  {
+   "token": "Lambda.Duration:up",
+   "type": "latency increased",
+   "service": "Lambda",
+   "resource": "incident-memory-demo-orders-api",
+   "resource_type": "lambda:function",
+   "metric": "Duration",
+   "direction": "up",
+   "baseline": 86.592,
+   "peak": 2251.277,
+   "peak_at": "2026-09-25T04:48:00Z",
+   "change_pct": 2499.9,
+   "magnitude": "26.0x baseline",
+   "unit": "Milliseconds",
+   "onset": "2026-09-25T04:41:00Z",
+   "until": "2026-09-25T04:48:00Z",
+   "evidence_ids": [
+    "CW-001"
+   ]
+  },
+  {
+   "token": "Lambda.ConcurrentExecutions:up",
+   "type": "concurrency/saturation increased",
+   "service": "Lambda",
+   "resource": "incident-memory-demo-orders-api",
+   "resource_type": "lambda:function",
+   "metric": "ConcurrentExecutions",
+   "direction": "up",
+   "baseline": 1.0,
+   "peak": 2.0,
+   "peak_at": "2026-09-25T04:43:00Z",
+   "change_pct": 100.0,
+   "magnitude": "2.0x baseline",
+   "unit": "Count",
+   "onset": "2026-09-25T04:43:00Z",
+   "until": "2026-09-25T04:48:00Z",
+   "evidence_ids": [
+    "CW-002"
+   ]
+  }
+ ],
+ "changes": [
+  {
+   "ts": "2026-09-25T04:38:01Z",
+   "change_category": "configuration",
+   "service": "Lambda",
+   "resource": "incident-memory-demo-orders-api",
+   "resource_type": "lambda:function",
+   "event_name": "UpdateFunctionConfiguration20150331v2",
+   "evidence_id": "CT-001"
+  }
+ ],
+ "suspected_causes": [],
+ "resolution": null,
+ "evidence": [
+  {
+   "id": "CT-001",
+   "kind": "cloudtrail_event",
+   "source": "CloudTrail",
+   "summary": "UpdateFunctionConfiguration on incident-memory-demo-orders-api (configuration change)",
+   "event_name": "UpdateFunctionConfiguration20150331v2",
+   "resource": "incident-memory-demo-orders-api",
+   "ts": "2026-09-25T04:38:01Z",
+   "caller_type": "AssumedRole"
+  },
+  {
+   "id": "CW-001",
+   "kind": "cloudwatch_metric",
+   "source": "CloudWatch",
+   "summary": "Duration increased from 87 ms to 2,251 ms (26.0x baseline)",
+   "metric": "Duration",
+   "stat": "Average",
+   "unit": "Milliseconds",
+   "baseline": 86.592,
+   "peak": 2251.277,
+   "onset": "2026-09-25T04:41:00Z",
+   "until": "2026-09-25T04:48:00Z"
+  },
+  {
+   "id": "CW-002",
+   "kind": "cloudwatch_metric",
+   "source": "CloudWatch",
+   "summary": "ConcurrentExecutions increased from 1 to 2 (2.0x baseline)",
+   "metric": "ConcurrentExecutions",
+   "stat": "Maximum",
+   "unit": "Count",
+   "baseline": 1.0,
+   "peak": 2.0,
+   "onset": "2026-09-25T04:43:00Z",
+   "until": "2026-09-25T04:48:00Z"
+  },
+  {
+   "id": "CW-003",
+   "kind": "cloudwatch_alarm",
+   "source": "CloudWatch",
+   "summary": "Alarm incident-memory-demo-orders-api-latency-high entered ALARM (Duration 1,291 ms, threshold 1,000 ms)",
+   "alarm_name": "incident-memory-demo-orders-api-latency-high",
+   "state": "ALARM",
+   "ts": "2026-09-25T04:45:48Z"
+  },
+  {
+   "id": "CW-004",
+   "kind": "cloudwatch_alarm",
+   "source": "CloudWatch",
+   "summary": "Alarm incident-memory-demo-orders-api-latency-high returned to OK",
+   "alarm_name": "incident-memory-demo-orders-api-latency-high",
+   "state": "OK",
+   "ts": "2026-09-25T04:55:48Z"
+  }
+ ],
+ "series": {
+  "Duration": [
+   [
+    "2026-09-25T04:15:00Z",
+    86.5942
+   ],
+   [
+    "2026-09-25T04:16:00Z",
+    86.6534
+   ],
+   [
+    "2026-09-25T04:17:00Z",
+    87.93727272727271
+   ],
+   [
+    "2026-09-25T04:30:00Z",
+    87.09700000000001
+   ],
+   [
+    "2026-09-25T04:31:00Z",
+    86.12180000000002
+   ],
+   [
+    "2026-09-25T04:32:00Z",
+    84.5528
+   ],
+   [
+    "2026-09-25T04:33:00Z",
+    88.8858
+   ],
+   [
+    "2026-09-25T04:34:00Z",
+    85.44921568627451
+   ],
+   [
+    "2026-09-25T04:35:00Z",
+    84.9614
+   ],
+   [
+    "2026-09-25T04:36:00Z",
+    87.7264
+   ],
+   [
+    "2026-09-25T04:37:00Z",
+    86.58959999999999
+   ],
+   [
+    "2026-09-25T04:38:00Z",
+    84.62583333333332
+   ],
+   [
+    "2026-09-25T04:39:00Z",
+    86.1596
+   ],
+   [
+    "2026-09-25T04:40:00Z",
+    219.297
+   ],
+   [
+    "2026-09-25T04:41:00Z",
+    488.05459999999994
+   ],
+   [
+    "2026-09-25T04:42:00Z",
+    761.3752
+   ],
+   [
+    "2026-09-25T04:43:00Z",
+    1027.9235999999996
+   ],
+   [
+    "2026-09-25T04:44:00Z",
+    1296.076
+   ],
+   [
+    "2026-09-25T04:45:00Z",
+    1568.569
+   ],
+   [
+    "2026-09-25T04:46:00Z",
+    1836.1668000000002
+   ],
+   [
+    "2026-09-25T04:47:00Z",
+    2108.3348000000005
+   ],
+   [
+    "2026-09-25T04:48:00Z",
+    2251.2766666666666
+   ]
+  ],
+  "ConcurrentExecutions": [
+   [
+    "2026-09-25T04:15:00Z",
+    1.0
+   ],
+   [
+    "2026-09-25T04:16:00Z",
+    1.0
+   ],
+   [
+    "2026-09-25T04:17:00Z",
+    1.0
+   ],
+   [
+    "2026-09-25T04:30:00Z",
+    1.0
+   ],
+   [
+    "2026-09-25T04:31:00Z",
+    1.0
+   ],
+   [
+    "2026-09-25T04:32:00Z",
+    1.0
+   ],
+   [
+    "2026-09-25T04:33:00Z",
+    1.0
+   ],
+   [
+    "2026-09-25T04:34:00Z",
+    1.0
+   ],
+   [
+    "2026-09-25T04:35:00Z",
+    1.0
+   ],
+   [
+    "2026-09-25T04:36:00Z",
+    1.0
+   ],
+   [
+    "2026-09-25T04:37:00Z",
+    1.0
+   ],
+   [
+    "2026-09-25T04:38:00Z",
+    1.0
+   ],
+   [
+    "2026-09-25T04:39:00Z",
+    1.0
+   ],
+   [
+    "2026-09-25T04:40:00Z",
+    1.0
+   ],
+   [
+    "2026-09-25T04:41:00Z",
+    1.0
+   ],
+   [
+    "2026-09-25T04:42:00Z",
+    1.0
+   ],
+   [
+    "2026-09-25T04:43:00Z",
+    2.0
+   ],
+   [
+    "2026-09-25T04:44:00Z",
+    2.0
+   ],
+   [
+    "2026-09-25T04:45:00Z",
+    2.0
+   ],
+   [
+    "2026-09-25T04:46:00Z",
+    2.0
+   ],
+   [
+    "2026-09-25T04:47:00Z",
+    2.0
+   ],
+   [
+    "2026-09-25T04:48:00Z",
+    2.0
+   ]
+  ],
+  "Errors": [
+   [
+    "2026-09-25T04:15:00Z",
+    0.0
+   ],
+   [
+    "2026-09-25T04:16:00Z",
+    0.0
+   ],
+   [
+    "2026-09-25T04:17:00Z",
+    0.0
+   ],
+   [
+    "2026-09-25T04:30:00Z",
+    0.0
+   ],
+   [
+    "2026-09-25T04:31:00Z",
+    0.0
+   ],
+   [
+    "2026-09-25T04:32:00Z",
+    0.0
+   ],
+   [
+    "2026-09-25T04:33:00Z",
+    0.0
+   ],
+   [
+    "2026-09-25T04:34:00Z",
+    0.0
+   ],
+   [
+    "2026-09-25T04:35:00Z",
+    0.0
+   ],
+   [
+    "2026-09-25T04:36:00Z",
+    0.0
+   ],
+   [
+    "2026-09-25T04:37:00Z",
+    0.0
+   ],
+   [
+    "2026-09-25T04:38:00Z",
+    0.0
+   ],
+   [
+    "2026-09-25T04:39:00Z",
+    0.0
+   ],
+   [
+    "2026-09-25T04:40:00Z",
+    0.0
+   ],
+   [
+    "2026-09-25T04:41:00Z",
+    0.0
+   ],
+   [
+    "2026-09-25T04:42:00Z",
+    0.0
+   ],
+   [
+    "2026-09-25T04:43:00Z",
+    0.0
+   ],
+   [
+    "2026-09-25T04:44:00Z",
+    0.0
+   ],
+   [
+    "2026-09-25T04:45:00Z",
+    0.0
+   ],
+   [
+    "2026-09-25T04:46:00Z",
+    0.0
+   ],
+   [
+    "2026-09-25T04:47:00Z",
+    0.0
+   ],
+   [
+    "2026-09-25T04:48:00Z",
+    0.0
+   ]
+  ],
+  "Throttles": [
+   [
+    "2026-09-25T04:15:00Z",
+    0.0
+   ],
+   [
+    "2026-09-25T04:16:00Z",
+    0.0
+   ],
+   [
+    "2026-09-25T04:17:00Z",
+    0.0
+   ],
+   [
+    "2026-09-25T04:30:00Z",
+    0.0
+   ],
+   [
+    "2026-09-25T04:31:00Z",
+    0.0
+   ],
+   [
+    "2026-09-25T04:32:00Z",
+    0.0
+   ],
+   [
+    "2026-09-25T04:33:00Z",
+    0.0
+   ],
+   [
+    "2026-09-25T04:34:00Z",
+    0.0
+   ],
+   [
+    "2026-09-25T04:35:00Z",
+    0.0
+   ],
+   [
+    "2026-09-25T04:36:00Z",
+    0.0
+   ],
+   [
+    "2026-09-25T04:37:00Z",
+    0.0
+   ],
+   [
+    "2026-09-25T04:38:00Z",
+    0.0
+   ],
+   [
+    "2026-09-25T04:39:00Z",
+    0.0
+   ],
+   [
+    "2026-09-25T04:40:00Z",
+    0.0
+   ],
+   [
+    "2026-09-25T04:41:00Z",
+    0.0
+   ],
+   [
+    "2026-09-25T04:42:00Z",
+    0.0
+   ],
+   [
+    "2026-09-25T04:43:00Z",
+    0.0
+   ],
+   [
+    "2026-09-25T04:44:00Z",
+    0.0
+   ],
+   [
+    "2026-09-25T04:45:00Z",
+    0.0
+   ],
+   [
+    "2026-09-25T04:46:00Z",
+    0.0
+   ],
+   [
+    "2026-09-25T04:47:00Z",
+    0.0
+   ],
+   [
+    "2026-09-25T04:48:00Z",
+    0.0
+   ]
+  ],
+  "Invocations": [
+   [
+    "2026-09-25T04:15:00Z",
+    50.0
+   ],
+   [
+    "2026-09-25T04:16:00Z",
+    50.0
+   ],
+   [
+    "2026-09-25T04:17:00Z",
+    22.0
+   ],
+   [
+    "2026-09-25T04:30:00Z",
+    50.0
+   ],
+   [
+    "2026-09-25T04:31:00Z",
+    50.0
+   ],
+   [
+    "2026-09-25T04:32:00Z",
+    50.0
+   ],
+   [
+    "2026-09-25T04:33:00Z",
+    50.0
+   ],
+   [
+    "2026-09-25T04:34:00Z",
+    51.0
+   ],
+   [
+    "2026-09-25T04:35:00Z",
+    50.0
+   ],
+   [
+    "2026-09-25T04:36:00Z",
+    50.0
+   ],
+   [
+    "2026-09-25T04:37:00Z",
+    50.0
+   ],
+   [
+    "2026-09-25T04:38:00Z",
+    48.0
+   ],
+   [
+    "2026-09-25T04:39:00Z",
+    50.0
+   ],
+   [
+    "2026-09-25T04:40:00Z",
+    50.0
+   ],
+   [
+    "2026-09-25T04:41:00Z",
+    50.0
+   ],
+   [
+    "2026-09-25T04:42:00Z",
+    50.0
+   ],
+   [
+    "2026-09-25T04:43:00Z",
+    50.0
+   ],
+   [
+    "2026-09-25T04:44:00Z",
+    50.0
+   ],
+   [
+    "2026-09-25T04:45:00Z",
+    50.0
+   ],
+   [
+    "2026-09-25T04:46:00Z",
+    50.0
+   ],
+   [
+    "2026-09-25T04:47:00Z",
+    50.0
+   ],
+   [
+    "2026-09-25T04:48:00Z",
+    3.0
+   ]
+  ]
+ },
+ "analysis": {
+  "collected_at": "2026-09-25T06:29:16Z",
+  "analyzed_at": "2026-09-25T06:29:16Z",
+  "window": {
+   "start": "2026-09-25T04:15:48Z",
+   "end": "2026-09-25T05:00:48Z"
+  },
+  "sources": {
+   "cloudwatch_alarms": "ok",
+   "cloudwatch_metrics": "ok",
+   "cloudtrail": "ok"
+  },
+  "errors": [],
+  "similar": [
+   {
+    "incident_id": "INC-0012",
+    "title": "Orders API latency after database parameter change (max_connections 400 → 1000)",
+    "source_type": "SEEDED_DEMO",
+    "started_at": "2026-07-14T22:37:00Z",
+    "score": 80,
+    "breakdown": [
+     {
+      "factor": "trigger",
+      "label": "Trigger / alarm signature",
+      "weight": 25,
+      "value": 1.0,
+      "points": 25.0,
+      "omitted": false,
+      "reason": "Same alarm: Lambda Duration (latency)"
+     },
+     {
+      "factor": "resources",
+      "label": "AWS service / resource type",
+      "weight": 20,
+      "value": 0.333,
+      "points": 6.7,
+      "omitted": false,
+      "reason": "Shared: Lambda function; only in the historical incident: RDS database, RDS parameter group"
+     },
+     {
+      "factor": "signals",
+      "label": "Observed signal overlap",
+      "weight": 25,
+      "value": 0.75,
+      "points": 18.8,
+      "omitted": false,
+      "reason": "2 of 2 current signals also seen: Lambda ConcurrentExecutions increased, Lambda Duration increased; only in the historical incident: Lambda Errors increased, RDS DatabaseConnections increased"
+     },
+     {
+      "factor": "sequence",
+      "label": "Event sequence",
+      "weight": 20,
+      "value": 1.0,
+      "points": 20.0,
+      "omitted": false,
+      "reason": "Same ordering of 4 of 4 events: configuration change → Lambda Duration increased → Lambda ConcurrentExecutions increased → Lambda Duration alarm"
+     },
+     {
+      "factor": "change",
+      "label": "Preceding change",
+      "weight": 10,
+      "value": 1.0,
+      "points": 10.0,
+      "omitted": false,
+      "reason": "Both preceded by a configuration change, but to a different resource (Lambda function here, RDS parameter group in the historical incident)"
+     }
+    ],
+    "next_events": [
+     {
+      "token": "Lambda.Errors:up",
+      "description": "Lambda Errors increased",
+      "after_token": "alarm:Lambda.Duration",
+      "after_description": "Lambda Duration alarm",
+      "minutes_after_state": 4.0
+     },
+     {
+      "token": "alarm:Lambda.Errors",
+      "description": "Lambda Errors alarm",
+      "after_token": "alarm:Lambda.Duration",
+      "after_description": "Lambda Duration alarm",
+      "minutes_after_state": 5.0
+     }
+    ],
+    "pattern": {
+     "offsets_min": {
+      "change:configuration": 0.0,
+      "RDS.DatabaseConnections:up": 1.0,
+      "Lambda.Duration:up": 3.0,
+      "Lambda.ConcurrentExecutions:up": 5.0,
+      "alarm:Lambda.Duration": 7.0,
+      "Lambda.Errors:up": 11.0,
+      "alarm:Lambda.Errors": 12.0
+     },
+     "sequence": [
+      "change:configuration",
+      "RDS.DatabaseConnections:up",
+      "Lambda.Duration:up",
+      "Lambda.ConcurrentExecutions:up",
+      "alarm:Lambda.Duration",
+      "Lambda.Errors:up",
+      "alarm:Lambda.Errors"
+     ]
+    },
+    "suspected_causes": [
+     {
+      "description": "Raising max_connections let the connection count surge; the database spent memory and CPU on connection handling, queries slowed, and every invocation took longer.",
+      "supporting_evidence": [
+       "CT-001",
+       "CW-001",
+       "CW-002"
+      ],
+      "confidence": "HIGH",
+      "reasoning": ""
+     },
+     {
+      "description": "Slower invocations increased concurrency until requests exceeded the downstream timeout, producing errors.",
+      "supporting_evidence": [
+       "CW-002",
+       "CW-003",
+       "CW-004"
+      ],
+      "confidence": "MEDIUM",
+      "reasoning": ""
+     }
+    ],
+    "resolution": {
+     "action": "Reverted max_connections to 400 in the DB parameter group and rebooted the writer.",
+     "ts": "2026-07-14T22:52:00Z",
+     "result": "Connections, duration and errors returned to baseline; both alarms returned to OK.",
+     "time_to_recovery_min": 14,
+     "supporting_evidence": [
+      "CW-007"
+     ]
+    }
+   },
+   {
+    "incident_id": "INC-0009",
+    "title": "Orders API latency after DynamoDB capacity change",
+    "source_type": "SEEDED_DEMO",
+    "started_at": "2026-06-11T09:20:00Z",
+    "score": 69,
+    "breakdown": [
+     {
+      "factor": "trigger",
+      "label": "Trigger / alarm signature",
+      "weight": 25,
+      "value": 1.0,
+      "points": 25.0,
+      "omitted": false,
+      "reason": "Same alarm: Lambda Duration (latency)"
+     },
+     {
+      "factor": "resources",
+      "label": "AWS service / resource type",
+      "weight": 20,
+      "value": 0.5,
+      "points": 10.0,
+      "omitted": false,
+      "reason": "Shared: Lambda function; only in the historical incident: DynamoDB table"
+     },
+     {
+      "factor": "signals",
+      "label": "Observed signal overlap",
+      "weight": 25,
+      "value": 0.375,
+      "points": 9.4,
+      "omitted": false,
+      "reason": "1 of 2 current signals also seen: Lambda Duration increased; only in the historical incident: DynamoDB WriteThrottleEvents increased, Lambda Errors increased"
+     },
+     {
+      "factor": "sequence",
+      "label": "Event sequence",
+      "weight": 20,
+      "value": 0.75,
+      "points": 15.0,
+      "omitted": false,
+      "reason": "Same ordering of 3 of 4 events: configuration change → Lambda Duration increased → Lambda Duration alarm"
+     },
+     {
+      "factor": "change",
+      "label": "Preceding change",
+      "weight": 10,
+      "value": 1.0,
+      "points": 10.0,
+      "omitted": false,
+      "reason": "Both preceded by a configuration change, but to a different resource (Lambda function here, DynamoDB table in the historical incident)"
+     }
+    ],
+    "next_events": [
+     {
+      "token": "Lambda.Errors:up",
+      "description": "Lambda Errors increased",
+      "after_token": "alarm:Lambda.Duration",
+      "after_description": "Lambda Duration alarm",
+      "minutes_after_state": 1.0
+     }
+    ],
+    "pattern": {
+     "offsets_min": {
+      "change:configuration": 0.0,
+      "DynamoDB.WriteThrottleEvents:up": 2.0,
+      "Lambda.Duration:up": 3.0,
+      "alarm:Lambda.Duration": 5.0,
+      "Lambda.Errors:up": 6.0
+     },
+     "sequence": [
+      "change:configuration",
+      "DynamoDB.WriteThrottleEvents:up",
+      "Lambda.Duration:up",
+      "alarm:Lambda.Duration",
+      "Lambda.Errors:up"
+     ]
+    },
+    "suspected_causes": [
+     {
+      "description": "Reduced write capacity caused throttled writes; SDK retries lengthened each invocation.",
+      "supporting_evidence": [
+       "CT-001",
+       "CW-001",
+       "CW-002"
+      ],
+      "confidence": "HIGH",
+      "reasoning": ""
+     }
+    ],
+    "resolution": {
+     "action": "Restored provisioned write capacity to 200 and switched the table to on-demand.",
+     "ts": "2026-06-11T09:34:00Z",
+     "result": "Throttling stopped and duration returned to baseline.",
+     "time_to_recovery_min": 14,
+     "supporting_evidence": [
+      "CW-005"
+     ]
+    }
+   }
+  ],
+  "compared_count": 5,
+  "best_below_threshold": {
+   "incident_id": "INC-0007",
+   "score": 37
+  },
+  "omitted_factors": {},
+  "rule_based": {
+   "summary": "A configuration change was recorded at 04:38 UTC. Observed: Lambda Duration increased at 04:41; Lambda ConcurrentExecutions increased at 04:43. The pattern resembles INC-0012.",
+   "suspected_causes": [
+    {
+     "description": "The configuration change (UpdateFunctionConfiguration) may have contributed: Lambda Duration increased 3 minutes later.",
+     "supporting_evidence": [
+      "CT-001",
+      "CW-001",
+      "CW-002"
+     ],
+     "confidence": "MEDIUM",
+     "reasoning": "Temporal ordering only; no other change was recorded in the window. INC-0012 followed the same pattern."
+    }
+   ],
+   "insufficient_evidence": false,
+   "insufficient_evidence_reason": ""
+  },
+  "fingerprint": "c9cd774b9796c5eb051a323ddf8baaaa",
+  "ai_status": "DONE",
+  "ai_requested_at": "2026-09-25T06:29:16Z",
+  "duration_ms": 1282,
+  "ai": {
+   "summary": "The incident-memory-demo-orders-api Lambda function experienced a latency spike and alarm trigger at 2026-09-25T04:45:48Z. This followed a configuration change at 2026-09-25T04:38:01Z and was accompanied by a 26x increase in Duration (from 87 ms to 2,251 ms) and a 2x increase in ConcurrentExecutions. The alarm returned to OK by 2026-09-25T04:55:48Z.",
+   "insufficient_evidence": false,
+   "insufficient_evidence_reason": "",
+   "suspected_causes": [
+    {
+     "description": "The configuration change to the Lambda function likely altered its behavior or resource usage, causing increased latency and concurrency.",
+     "supporting_evidence": [
+      "CT-001",
+      "CW-001",
+      "CW-002"
+     ],
+     "confidence": "MEDIUM",
+     "reasoning": "The timing of the configuration change (CT-001) directly precedes the latency and concurrency increases (CW-001, CW-002), suggesting a causal relationship. However, the exact nature of the configuration change is not specified, so confidence is medium."
+    }
+   ],
+   "similarity_explanations": {
+    "INC-0012": "This incident shares the same alarm signature (Lambda Duration) and event sequence (configuration change → Duration increase → Concurrency increase → Alarm). However, the historical incident involved an RDS parameter change, while this incident involves a Lambda configuration change. The historical incident also saw Lambda Errors and RDS connection issues, which were not observed here.",
+    "INC-0009": "This incident shares the same alarm signature and partial event sequence (configuration change → Duration increase → Alarm). The historical incident involved a DynamoDB capacity change, while this incident involves a Lambda configuration change. The historical incident saw DynamoDB throttling and Lambda errors, which were not observed here."
+   },
+   "dropped_items": 0,
+   "model_id": "us.amazon.nova-2-lite-v1:0",
+   "generated_at": "2026-09-25T06:29:19Z"
+  },
+  "ai_error": null
+ },
+ "pattern": {
+  "trigger": {
+   "service": "Lambda",
+   "metric": "Duration",
+   "family": "latency",
+   "comparison": "GreaterThanThreshold"
+  },
+  "services": [
+   "Lambda"
+  ],
+  "resource_types": [
+   "lambda:function"
+  ],
+  "signals": [
+   "Lambda.ConcurrentExecutions:up",
+   "Lambda.Duration:up"
+  ],
+  "sequence": [
+   "change:configuration",
+   "Lambda.Duration:up",
+   "Lambda.ConcurrentExecutions:up",
+   "alarm:Lambda.Duration"
+  ],
+  "offsets_min": {
+   "change:configuration": 0.0,
+   "Lambda.Duration:up": 3.0,
+   "Lambda.ConcurrentExecutions:up": 5.0,
+   "alarm:Lambda.Duration": 7.8
+  },
+  "preceding_change": "configuration",
+  "preceding_change_resource": "lambda:function"
+ },
+ "archived_note": "Live demo incident from 2026-09-25 (Duration-first pattern). Replaced by a new live run with the errors-first pattern; hidden from the app and kept here as evidence."
+}

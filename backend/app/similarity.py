@@ -164,6 +164,32 @@ def what_happened_next(cur, hist):
     return out
 
 
+def shared_sequence(cur, hist):
+    """Events both incidents share, in the current incident's order."""
+    hist_tokens = set(hist["sequence"])
+    return [t for t in cur["sequence"] if t in hist_tokens]
+
+
+def differences(cur, hist, hist_id):
+    """Plain-English differences between the two incidents (not part of the score)."""
+    out = []
+    ct, ht = cur.get("preceding_change_target"), hist.get("preceding_change_target")
+    if ct and ht and ct != ht:
+        out.append(f"Different change target: {ct} here vs {ht} in {hist_id}")
+    elif cur["preceding_change"] != hist["preceding_change"]:
+        out.append(f"Different preceding change: {cur['preceding_change']} here vs {hist['preceding_change']} in {hist_id}")
+    only_hist = sorted(set(hist["resource_types"]) - set(cur["resource_types"]))
+    if only_hist:
+        out.append(f"{hist_id} also involved: " + ", ".join(describe_resource_type(t) for t in only_hist))
+    hist_only_signals = [t for t in hist["signals"] if t not in set(cur["signals"])]
+    if hist_only_signals:
+        out.append(f"Signals seen only in {hist_id}: " + ", ".join(describe_token(t) for t in hist_only_signals))
+    cur_only = [t for t in cur["signals"] if t not in set(hist["signals"])]
+    if cur_only:
+        out.append("Signals seen only here: " + ", ".join(describe_token(t) for t in cur_only))
+    return out
+
+
 def find_similar(current_memory, candidates, sources=None):
     """Rank resolved historical memories; only matches >= MATCH_THRESHOLD are returned."""
     cur = current_memory["pattern"]
@@ -181,6 +207,8 @@ def find_similar(current_memory, candidates, sources=None):
             "score": score,
             "breakdown": breakdown,
             "next_events": what_happened_next(cur, m["pattern"]),
+            "shared_sequence": shared_sequence(cur, m["pattern"]),
+            "differences": differences(cur, m["pattern"], m["id"]),
             "pattern": {"offsets_min": m["pattern"]["offsets_min"], "sequence": m["pattern"]["sequence"]},
             "suspected_causes": m.get("suspected_causes", []),
             "resolution": m.get("resolution"),

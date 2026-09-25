@@ -66,8 +66,11 @@ deterministic results immediately and adds the AI explanation when it arrives.
 
 Structured document (see `backend/app/memory.py`):
 
-- **Identity**: ID, title, status (`NEW`/`OPEN`/`RESOLVED`), created/start/end timestamps,
+- **Identity**: ID, title, status (`NEW` not analyzed, `OPEN` alarm active, `RECOVERED` alarms OK but no resolution recorded, `RESOLVED` resolution recorded), created/start/end timestamps,
   region, source type (`LIVE_DEMO`, `CAPTURED_DEMO`, `SEEDED_DEMO`)
+- **Started** is always the time the trigger alarm entered ALARM, for live and historical incidents alike.
+  Earlier events (such as the configuration change) appear on the timeline at negative offsets (for example −7 min).
+- **Evidence IDs** (`CT-001…`, `CW-001…`) are numbered in time order within each incident.
 - **Trigger**: alarm name, category (metric family), service, metric, comparison, observed value, threshold, alarm time
 - **Timeline**: evidence ID, timestamp, service, category (`change`/`metric`/`alarm`/`recovery`/`action`), description, source
 - **Signals**: type, metric, direction, baseline, peak, magnitude, onset/until, evidence IDs

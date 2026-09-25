@@ -15,6 +15,7 @@ from datetime import datetime, timedelta, timezone
 from . import ai, collectors, config
 from .log import log, metric
 from .memory import (alarm_token, build_pattern, describe_token, iso, metric_family, now_iso, parse_ts,
+                     renumber_evidence,
                      preceding_change, short_event_name)
 from .seed_data import fmt_value
 from .signals import detect_signal
@@ -35,10 +36,11 @@ class NotAnalyzable(Exception):
 def list_incidents():
     """Stored memories plus newly discovered alarm episodes that have not been analyzed yet."""
     store = get_store()
-    memories = store.list()
+    hidden = store.hidden_episodes()
+    memories = [m for m in store.list() if m["id"] not in hidden]
     # Episodes already captured as historical memories are not listed again as live incidents.
     known = ({m["id"] for m in memories} | {m["captured_from"] for m in memories if m.get("captured_from")}
-             | store.hidden_episodes())
+             | hidden)
     warnings = []
     try:
         for ep in collectors.discover_episodes():
@@ -51,11 +53,11 @@ def list_incidents():
 
 def get_incident(incident_id):
     store = get_store()
+    if incident_id in store.hidden_episodes():
+        raise NotFound(incident_id)
     memory = store.get(incident_id)
     if memory:
         return memory
-    if incident_id in store.hidden_episodes():
-        raise NotFound(incident_id)
     for ep in _episodes_or_empty():
         if ep["id"] == incident_id:
             return _new_incident(ep)
@@ -95,14 +97,15 @@ def analyze(incident_id):
     """Returns (memory, start_ai): start_ai is True when a new asynchronous Bedrock step must be started."""
     started = time.time()
     store = get_store()
+    if incident_id in store.hidden_episodes():
+        raise NotFound(incident_id)
     existing = store.get(incident_id)
     if existing and existing.get("source_type") != "LIVE_DEMO":
         raise NotAnalyzable("Historical incidents are stored memories and are not re-collected from AWS.")
     if existing and time.time() - parse_ts(existing["analysis"]["collected_at"]).timestamp() < config.COLLECTION_CACHE_SECONDS:
         return existing, False
 
-    if existing is None and (incident_id in store.hidden_episodes()
-                             or any(m.get("captured_from") == incident_id for m in store.list())):
+    if existing is None and any(m.get("captured_from") == incident_id for m in store.list()):
         raise NotAnalyzable("This demo incident is not available for analysis.")
     episode = next((e for e in _episodes_or_empty() if e["id"] == incident_id), None)
     if episode is None and existing is None:
@@ -265,6 +268,8 @@ def collect_and_build(incident_id, trigger_ts, trigger_alarm, start, end):
     for t in transitions:
         if t["new"] not in ("ALARM", "OK") or (t["new"] == "OK" and t["old"] != "ALARM"):
             continue
+        if parse_ts(t["ts"]) < trigger_ts - timedelta(minutes=1):
+            continue  # state changes before this incident's trigger belong to an earlier episode
         cw_n += 1
         eid = f"CW-{cw_n:03d}"
         d = alarm_defs.get(t["alarm_name"], {})
@@ -301,7 +306,8 @@ def collect_and_build(incident_id, trigger_ts, trigger_alarm, start, end):
         "id": incident_id,
         "title": _title(trigger, changes, signals),
         "source_type": "LIVE_DEMO",
-        "status": "OPEN",
+        # RECOVERED: every alarm returned to OK but no resolution was recorded. OPEN: still in ALARM.
+        "status": "RECOVERED" if ended else "OPEN",
         "created_at": now_iso(),
         "started_at": iso(trigger_ts),
         "ended_at": ended,
@@ -322,6 +328,7 @@ def collect_and_build(incident_id, trigger_ts, trigger_alarm, start, end):
             "errors": errors,
         },
     }
+    renumber_evidence(memory)
     memory["pattern"] = build_pattern(memory)
     return memory
 
@@ -347,7 +354,7 @@ def _title(trigger, changes, signals):
         family, "Orders API alarm")
     before = [c for c in changes if c["ts"] <= trigger.get("ts", "")]
     if before:
-        return f"{what} after {before[-1]['change_category']} change"
+        return f"{what} after {before[-1]['service']} {before[-1]['change_category']} change"
     return f"{what} alarm"
 
 
@@ -364,6 +371,7 @@ def rule_based_explanation(memory, matches):
         if 0 <= lag <= 15:
             top = matches[0] if matches else None
             change_factor = next((b for b in top["breakdown"] if b["factor"] == "change"), {}) if top else {}
+            earlier = [c for c in memory["changes"] if c["ts"] < pre["ts"]]
             same_history = bool(top and change_factor.get("value") == 1.0
                                 and any(c["confidence"] == "HIGH" for c in top["suspected_causes"]))
             causes.append({
@@ -371,7 +379,9 @@ def rule_based_explanation(memory, matches):
                                 f"may have contributed: {describe_token(first['token'])} {lag} minutes later."),
                 "supporting_evidence": [pre["evidence_id"]] + [e for s in signals for e in s["evidence_ids"]],
                 "confidence": "MEDIUM" if same_history else "LOW",
-                "reasoning": ("Temporal ordering only; no other change was recorded in the window."
+                "reasoning": ("Temporal ordering only: this is the most recent change before the first signal"
+                              + (f"; {len(earlier)} earlier change(s) in the window preceded it without effect."
+                                 if earlier else "; no other change was recorded in the window.")
                               + (f" {top['incident_id']} followed the same pattern." if same_history else "")),
             })
     if not signals and not memory["changes"]:

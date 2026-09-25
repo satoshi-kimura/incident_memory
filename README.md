@@ -31,10 +31,10 @@ When a new AWS incident occurs, it:
 It does not only analyze what is happening now. It asks:
 **Have we seen this pattern before, and what happened last time?**
 
-> **80% similar to INC-0012** (ten weeks earlier). The direct cause was different (a database parameter
-> change instead of a Lambda configuration change), but the degradation followed the same sequence:
-> change → duration ↑ → concurrency ↑ → latency alarm. **Last time, errors started 4 minutes after the
-> latency alarm.** The team reverted the change and recovered 14 minutes after the alarm.
+> **82% similar to INC-0012** (ten weeks earlier). The direct cause was different: a database connection pool
+> change there, a Lambda timeout/retry configuration change here. But the degradation followed the same sequence:
+> configuration change → errors ↑ → latency ↑ → concurrency ↑ → latency alarm. **Last time, the errors alarm fired
+> 3 minutes after the latency alarm.** The team reverted the pool change and recovered 14 minutes after the alarm.
 
 The point is not to find an identical failure. It is to recognize a **similar operational pattern**
 across different resources and causes, and to explain exactly why it matched and where it differs.
@@ -57,17 +57,27 @@ across different resources and causes, and to explain exactly why it matched and
 2. Under **Current incidents**, open the live demo incident (source `LIVE DEMO`).
 3. Click **Analyze Incident**.
 4. Read the result:
-   - **the match**: "80% similar to INC-0012", **Why 80% similar?** (what matches, what differs), and what happened next last time
-   - **Timeline**: CloudTrail change, then Duration increase, then concurrency increase, then alarm
-   - **Suspected Causes** with confidence and evidence
+   - **The match**: "N% similar to INC-0012" (a different cause: a database connection pool change),
+     **Why N% similar?** (what matches), **What is different**, and **What happened last time?**
+     (previous suspected cause, action, outcome, recovery time)
+   - **Timeline**: a Lambda configuration change (CloudTrail), then errors ↑, latency ↑ and concurrency ↑ (CloudWatch),
+     then the latency alarm. Times are shown relative to Started (the alarm time)
+   - **Suspected Causes** with confidence and evidence IDs
    - **Similar Incidents** with the per-factor score breakdown
-   - **Previous Resolution** from the historical incident
 5. Open **INC-0012** to see the historical memory it matched.
 
 Data sources are labeled in the UI:
-`LIVE_DEMO` means collected now from AWS for the demo workload. `CAPTURED_DEMO` means captured
-earlier from a controlled demo incident in AWS. `SEEDED_DEMO` means fictional history for
-demonstration, never presented as a real production incident.
+
+| Label | Meaning |
+|---|---|
+| **LIVE DEMO** | Collected now from CloudWatch and CloudTrail in the isolated AWS demo environment |
+| **CAPTURED DEMO** | Captured earlier from a controlled incident in the isolated AWS demo environment |
+| **SEEDED DEMO** | Fictional incident created for comparison. It did not occur in AWS |
+
+No incident comes from a real production system.
+
+Incident status: **Open · alarm active** (still in ALARM), **Recovered · no resolution recorded**
+(alarms returned to OK, no action recorded), **Resolved** (resolution recorded; used for historical comparison).
 
 ## Architecture
 

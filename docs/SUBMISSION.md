@@ -36,10 +36,11 @@ When a new incident occurs, it does not only analyze what is happening now. It a
    and preceding change.
 5. **Amazon Bedrock** (Amazon Nova 2 Lite through the Converse API; the model is configurable) explains the evidence, suggests evidence-backed suspected causes, and
    explains the similarity. It never calculates the score, and every claim must cite evidence.
-6. The UI shows the closest past pattern and why it matched. For example, "80% similar to INC-0012", from ten weeks
-   earlier: a database parameter change, not a Lambda configuration change. It had the same latency alarm and
-   the same degradation sequence (change → duration ↑ → concurrency ↑ → alarm), with different resources.
-   "Last time, errors started 4 minutes after the latency alarm; reverting the change recovered the service."
+6. The UI shows the closest past pattern and why it matched. For example, "82% similar to INC-0012", from ten weeks
+   earlier: a **database connection pool change**, not a Lambda configuration change. It had the same latency alarm and
+   the same degradation sequence (configuration change → errors ↑ → latency ↑ → concurrency ↑ → alarm), but different
+   resources. "Last time, the errors alarm fired 3 minutes after the latency alarm. Reverting the pool change
+   recovered the service 14 minutes after the alarm."
 
 The value is not finding an identical failure. It is recognizing a **similar operational pattern** across
 different causes and resources, and saying precisely where the two incidents match and where they differ.

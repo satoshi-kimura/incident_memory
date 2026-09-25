@@ -88,24 +88,27 @@ with their offsets measured from that shared event, for example:
 
 This is a **historical comparison, not a prediction**, and the UI says so.
 
-## Worked example (live demo incident INC-20260925-0445, real AWS data)
+## Worked example (live demo incident INC-20260925-1750, real AWS data)
 
-**Current incident (LIVE_DEMO):** a Lambda configuration change at 04:38 UTC, then Duration ↑ (04:41),
-then ConcurrentExecutions ↑ (04:43), then the latency alarm (04:45).
+**Current incident (LIVE_DEMO):** a Lambda configuration change at 17:41 UTC (shorter downstream timeout plus retries;
+CloudTrail shows the API call, not the values). Then errors ↑ (17:43, about 5 per minute, below the errors alarm
+threshold of 10), Duration ↑ (17:46), ConcurrentExecutions ↑ (17:47), and the latency alarm at 17:50. An earlier,
+unrelated configuration change at 17:29 is in the window but is not the preceding change: the preceding change is
+the most recent one before the first signal.
 
-**INC-0012 (SEEDED_DEMO, 2026-07-14):** a **different direct cause**. An RDS parameter group change
-(max_connections 400 → 1000) was followed by DatabaseConnections ↑, then Lambda Duration ↑, then
-ConcurrentExecutions ↑, then the latency alarm, then Errors ↑ (4 minutes later), then the errors alarm, then the revert.
+**INC-0012 (SEEDED_DEMO, 2026-07-14):** a **different direct cause**. A database connection pool change
+(`/orders-api/db/pool-max` 20 → 100) was followed by DatabaseConnections ↑, then Errors ↑, FreeableMemory ↓, Duration ↑,
+ConcurrentExecutions ↑, the latency alarm, the errors alarm (3 minutes later), the revert, and recovery.
 
 | Factor | Points | Reason |
 |---|---|---|
 | Trigger | 25 / 25 | Same alarm: Lambda Duration (latency) |
-| Event sequence | 20 / 20 | Same ordering of 4 of 4 events |
-| Preceding change | 10 / 10 | Both configuration changes, **to different resources** (Lambda function vs RDS parameter group) |
-| Signals | 18.8 / 25 | Both current signals seen; the historical incident also had DatabaseConnections ↑ and Errors ↑ |
-| Resource type | 6.7 / 20 | Shared: Lambda function; only in the historical incident: RDS database, RDS parameter group |
-| **Score** | **80 %** | |
+| Event sequence | 20 / 20 | Same ordering of 5 of 5 events |
+| Preceding change | 10 / 10 | Both configuration changes, **to different targets** (Lambda function vs database connection pool) |
+| Signals | 20 / 25 | All 3 current signals seen; the historical incident also had DatabaseConnections ↑ and FreeableMemory ↓ |
+| Resource type | 6.7 / 20 | Shared: Lambda function; only in the historical incident: RDS database, SSM parameter |
+| **Score** | **82 %** | |
 
-INC-0009 (a DynamoDB capacity change) scores 69 %. INC-0007 (a traffic spike with no change
-event) scores 37 % and is not shown. The UI renders this breakdown as **"Why 80% similar?"**,
-with ✓ for full matches and ◐ for partial ones.
+INC-0009 (DynamoDB capacity reduction → throttling → latency → alarm) scores 70 % as a different family of cause.
+Everything else is below 60 % and not shown. The UI renders the breakdown as **"Why 82% similar?"**, followed by
+**"What is different"** and **"What happened last time?"**.

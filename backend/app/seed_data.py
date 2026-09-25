@@ -1,61 +1,69 @@
 """Seeded historical Incident Memories (source_type SEEDED_DEMO).
 
-Fictional incidents for the demo workload "incident-memory-demo-orders-api".
-They are labeled SEEDED_DEMO everywhere and are never presented as real
-production incidents. Each is defined with minute offsets from its start and
+Fictional incidents for the demo workload "incident-memory-demo-orders-api",
+created for comparison. They did not occur in AWS; they are labeled SEEDED_DEMO
+everywhere and their evidence sources say "fictional". Each is defined with minute offsets from its start and
 expanded into a full Incident Memory by _build().
 """
 from datetime import datetime, timedelta, timezone
 
-from .memory import alarm_token, build_pattern, iso, magnitude, metric_family, signal_token, signal_type
+from .memory import (alarm_token, build_pattern, iso, magnitude, metric_family, renumber_evidence, signal_token,
+                     signal_type)
 
 FN = "incident-memory-demo-orders-api"
 TABLE = "incident-memory-demo-orders"
 DB = "incident-memory-demo-orders-db"
-DB_PARAMS = "incident-memory-demo-orders-db-params"
+POOL_PARAM = "/orders-api/db/pool-max"
+
+# Seeded evidence is fictional; say so wherever its source is shown.
+SEEDED_CT = "Seeded (fictional CloudTrail)"
+SEEDED_CW = "Seeded (fictional CloudWatch)"
 
 SAMPLES = [
     {
         "id": "INC-0012",
-        "title": "Orders API latency after database parameter change (max_connections 400 → 1000)",
-        "summary": ("A database parameter group change raised max_connections on orders-db from 400 to 1000. "
-                    "Database connections surged within a minute, then Lambda duration and concurrency rose and the "
-                    "latency alarm fired. Errors began four minutes after the latency alarm. Reverting the parameter "
-                    "restored normal behavior."),
+        "title": "API degradation after database connection pool change",
+        "summary": ("A configuration change raised the application's database connection pool limit from 20 to 100. "
+                    "Database connections surged, connection errors started, freeable memory on the database fell, "
+                    "and API latency rose until the latency alarm fired. Errors kept rising and the errors alarm "
+                    "followed three minutes later. Reverting the pool limit restored normal behavior."),
         "start": "2026-07-14T22:37:00Z",
         "changes": [
-            (0, "configuration", "RDS", DB_PARAMS, "rds:db-parameter-group", "ModifyDBParameterGroup",
-             "DB parameter group updated: max_connections 400 → 1000"),
+            (0, "configuration", "SSM", POOL_PARAM, "ssm:parameter", "PutParameter",
+             "Parameter /orders-api/db/pool-max changed from 20 to 100", "database connection pool (SSM parameter)"),
         ],
         "signals": [
-            (1, 16, "RDS", DB, "rds:db", "DatabaseConnections", "up", 180, 940, "Count"),
-            (3, 16, "Lambda", FN, "lambda:function", "Duration", "up", 95, 2310, "Milliseconds"),
-            (5, 16, "Lambda", FN, "lambda:function", "ConcurrentExecutions", "up", 1, 4, "Count"),
-            (11, 16, "Lambda", FN, "lambda:function", "Errors", "up", 0, 38, "Count"),
+            # pre-numbering evidence IDs: CT-001 change; CW-001..CW-005 signals; CW-006.. alarms
+            (1, 16, "RDS", DB, "rds:db", "DatabaseConnections", "up", 180, 920, "Count"),
+            (2, 16, "Lambda", FN, "lambda:function", "Errors", "up", 0, 38, "Count"),
+            (3, 16, "RDS", DB, "rds:db", "FreeableMemory", "down", 2100, 780, "Megabytes"),
+            (4, 16, "Lambda", FN, "lambda:function", "Duration", "up", 95, 2310, "Milliseconds"),
+            (6, 16, "Lambda", FN, "lambda:function", "ConcurrentExecutions", "up", 1, 4, "Count"),
         ],
         "alarms": [
-            (7, "incident-memory-demo-orders-api-latency-high", "Lambda", "Duration", "GreaterThanThreshold", 1240, 1000, True),
-            (12, "incident-memory-demo-orders-api-errors-high", "Lambda", "Errors", "GreaterThanThreshold", 17, 5, False),
+            (8, "incident-memory-demo-orders-api-latency-high", "Lambda", "Duration", "GreaterThanThreshold", 1240, 1000, True),
+            (11, "incident-memory-demo-orders-api-errors-high", "Lambda", "Errors", "GreaterThanThreshold", 17, 10, False),
         ],
         "causes": [
-            ("Raising max_connections let the connection count surge; the database spent memory and CPU on "
-             "connection handling, queries slowed, and every invocation took longer.",
-             ["CT-001", "CW-001", "CW-002"], "HIGH"),
-            ("Slower invocations increased concurrency until requests exceeded the downstream timeout, producing errors.",
-             ["CW-002", "CW-003", "CW-004"], "MEDIUM"),
+            ("The larger connection pool let every Lambda execution environment open more database connections; "
+             "connection count and memory use on the database rose, queries slowed and some connections were refused.",
+             ["CT-001", "CW-001", "CW-003"], "HIGH"),
+            ("Slow queries lengthened each invocation, which raised concurrency and the latency alarm.",
+             ["CW-003", "CW-004", "CW-005"], "MEDIUM"),
         ],
-        "resolution": (15, 21, "Reverted max_connections to 400 in the DB parameter group and rebooted the writer.",
-                       "Connections, duration and errors returned to baseline; both alarms returned to OK."),
+        "resolution": (15, 22, "Reverted /orders-api/db/pool-max to 20 and redeployed the function.",
+                       "Connections, memory, latency and errors returned to baseline; both alarms returned to OK."),
     },
     {
         "id": "INC-0009",
-        "title": "Orders API latency after DynamoDB capacity change",
-        "summary": ("Provisioned write capacity on the orders table was reduced. Write throttling followed within two "
-                    "minutes, Lambda duration increased as the SDK retried, and errors appeared."),
+        "title": "Orders API latency after DynamoDB capacity reduction",
+        "summary": ("Provisioned write capacity on the orders table was reduced from 200 to 25. Write throttling "
+                    "followed within two minutes, Lambda duration increased as the SDK retried, the latency alarm fired, "
+                    "and errors rose until the errors alarm fired."),
         "start": "2026-06-11T09:20:00Z",
         "changes": [
             (0, "configuration", "DynamoDB", TABLE, "dynamodb:table", "UpdateTable",
-             "Table updated: provisioned write capacity 200 → 25"),
+             "Table updated: provisioned write capacity 200 → 25", "DynamoDB table capacity"),
         ],
         "signals": [
             (2, 12, "DynamoDB", TABLE, "dynamodb:table", "WriteThrottleEvents", "up", 0, 380, "Count"),
@@ -64,13 +72,14 @@ SAMPLES = [
         ],
         "alarms": [
             (5, "incident-memory-demo-orders-api-latency-high", "Lambda", "Duration", "GreaterThanThreshold", 1090, 1000, True),
+            (8, "incident-memory-demo-orders-api-errors-high", "Lambda", "Errors", "GreaterThanThreshold", 14, 10, False),
         ],
         "causes": [
             ("Reduced write capacity caused throttled writes; SDK retries lengthened each invocation.",
              ["CT-001", "CW-001", "CW-002"], "HIGH"),
         ],
-        "resolution": (14, 19, "Restored provisioned write capacity to 200 and switched the table to on-demand.",
-                       "Throttling stopped and duration returned to baseline."),
+        "resolution": (14, 19, "Switched the DynamoDB table to on-demand capacity mode.",
+                       "Throttling stopped; duration and errors returned to baseline and both alarms returned to OK."),
     },
     {
         "id": "INC-0007",
@@ -102,13 +111,13 @@ SAMPLES = [
         "start": "2026-06-24T16:02:00Z",
         "changes": [
             (0, "deployment", "Lambda", FN, "lambda:function", "UpdateFunctionCode20150331v2",
-             "New code package deployed (build 1184)"),
+             "New code package deployed (build 1184)", "Lambda function code"),
         ],
         "signals": [
             (1, 9, "Lambda", FN, "lambda:function", "Errors", "up", 0, 186, "Count"),
         ],
         "alarms": [
-            (2, "incident-memory-demo-orders-api-errors-high", "Lambda", "Errors", "GreaterThanThreshold", 96, 5, True),
+            (2, "incident-memory-demo-orders-api-errors-high", "Lambda", "Errors", "GreaterThanThreshold", 96, 10, True),
         ],
         "causes": [
             ("The deployed code expected an environment variable that the function configuration did not define.",
@@ -125,7 +134,7 @@ SAMPLES = [
         "start": "2026-08-05T11:15:00Z",
         "changes": [
             (0, "scaling", "Lambda", FN, "lambda:function", "PutFunctionConcurrency20171031",
-             "Reserved concurrency set to 1"),
+             "Reserved concurrency set to 1", "Lambda reserved concurrency"),
         ],
         "signals": [
             (1, 8, "Lambda", FN, "lambda:function", "Throttles", "up", 0, 144, "Count"),
@@ -146,6 +155,8 @@ def fmt_value(value, unit):
         return f"{value:,.0f} ms"
     if unit == "Percent":
         return f"{value:.0f}%"
+    if unit == "Megabytes":
+        return f"{value:,.0f} MB"
     return f"{value:,.0f}"
 
 
@@ -158,15 +169,15 @@ def _build(spec):
     evidence, timeline, changes, signals = [], [], [], []
     ct_n = cw_n = 0
 
-    for off, cat, service, resource, rtype, event_name, text in spec["changes"]:
+    for off, cat, service, resource, rtype, event_name, text, target in spec["changes"]:
         ct_n += 1
         eid = f"CT-{ct_n:03d}"
-        evidence.append({"id": eid, "kind": "cloudtrail_event", "source": "CloudTrail", "summary": text,
+        evidence.append({"id": eid, "kind": "cloudtrail_event", "source": SEEDED_CT, "summary": text,
                          "event_name": event_name, "service": service, "resource": resource, "ts": at(off)})
         changes.append({"ts": at(off), "change_category": cat, "service": service, "resource": resource,
-                        "resource_type": rtype, "event_name": event_name, "evidence_id": eid})
+                        "resource_type": rtype, "event_name": event_name, "evidence_id": eid, "target": target})
         timeline.append({"evidence_id": eid, "ts": at(off), "service": service, "category": "change",
-                         "description": text, "source": "CloudTrail"})
+                         "description": text, "source": SEEDED_CT})
 
     for off, until, service, resource, rtype, metric, direction, base, peak, unit in spec["signals"]:
         cw_n += 1
@@ -174,15 +185,15 @@ def _build(spec):
         pct = round((peak - base) / abs(base) * 100, 1) if base else None
         verb = "increased" if direction == "up" else "decreased"
         text = f"{metric} {verb} from {fmt_value(base, unit)} to {fmt_value(peak, unit)}"
-        evidence.append({"id": eid, "kind": "cloudwatch_metric", "source": "CloudWatch", "summary": text,
-                         "metric": metric, "service": service, "resource": resource})
+        evidence.append({"id": eid, "kind": "cloudwatch_metric", "source": SEEDED_CW, "summary": text,
+                         "metric": metric, "service": service, "resource": resource, "onset": at(off)})
         signals.append({"token": signal_token(service, metric, direction), "type": signal_type(metric, direction),
                         "service": service, "resource": resource, "resource_type": rtype, "metric": metric,
                         "direction": direction, "baseline": base, "peak": peak, "change_pct": pct,
                         "magnitude": magnitude(pct), "unit": unit, "onset": at(off), "until": at(until),
                         "evidence_ids": [eid]})
         timeline.append({"evidence_id": eid, "ts": at(off), "service": service, "category": "metric",
-                         "description": text, "source": "CloudWatch"})
+                         "description": text, "source": SEEDED_CW})
 
     trigger = None
     for off, name, service, metric, comparison, value, threshold, is_trigger in spec["alarms"]:
@@ -190,10 +201,10 @@ def _build(spec):
         eid = f"CW-{cw_n:03d}"
         unit = next((s[9] for s in spec["signals"] if s[5] == metric), "Count")
         text = f"Alarm {name} entered ALARM ({metric} {fmt_value(value, unit)} > threshold {fmt_value(threshold, unit)})"
-        evidence.append({"id": eid, "kind": "cloudwatch_alarm", "source": "CloudWatch", "summary": text,
+        evidence.append({"id": eid, "kind": "cloudwatch_alarm", "source": SEEDED_CW, "summary": text,
                          "alarm_name": name, "ts": at(off)})
         timeline.append({"evidence_id": eid, "ts": at(off), "service": service, "category": "alarm",
-                         "description": text, "source": "CloudWatch", "alarm_token": alarm_token(service, metric)})
+                         "description": text, "source": SEEDED_CW, "alarm_token": alarm_token(service, metric)})
         if is_trigger:
             trigger = {"alarm_name": name, "alarm_category": metric_family(metric), "service": service,
                        "metric": metric, "comparison": comparison, "value": value, "threshold": threshold,
@@ -202,12 +213,12 @@ def _build(spec):
     act_off, ok_off, action, result = spec["resolution"]
     cw_n += 1
     ok_id = f"CW-{cw_n:03d}"
-    evidence.append({"id": ok_id, "kind": "cloudwatch_alarm", "source": "CloudWatch",
+    evidence.append({"id": ok_id, "kind": "cloudwatch_alarm", "source": SEEDED_CW,
                      "summary": "All incident alarms returned to OK", "ts": at(ok_off)})
     timeline.append({"evidence_id": None, "ts": at(act_off), "service": None, "category": "action",
-                     "description": action, "source": "Operator record"})
-    timeline.append({"evidence_id": ok_id, "ts": at(ok_off), "service": "CloudWatch", "category": "recovery",
-                     "description": "All incident alarms returned to OK", "source": "CloudWatch"})
+                     "description": action, "source": "Seeded (fictional operator record)"})
+    timeline.append({"evidence_id": ok_id, "ts": at(ok_off), "service": "Lambda", "category": "recovery",
+                     "description": "All incident alarms returned to OK", "source": SEEDED_CW})
     timeline.sort(key=lambda e: e["ts"])
 
     memory = {
@@ -216,7 +227,7 @@ def _build(spec):
         "source_type": "SEEDED_DEMO",
         "status": "RESOLVED",
         "created_at": at(ok_off),
-        "started_at": at(0),
+        "started_at": trigger["ts"],  # incidents start when the alarm enters ALARM
         "ended_at": at(ok_off),
         "region": "us-east-1",
         "trigger": trigger,
@@ -235,6 +246,7 @@ def _build(spec):
         },
         "evidence": evidence,
     }
+    renumber_evidence(memory)
     memory["pattern"] = build_pattern(memory)
     return memory
 

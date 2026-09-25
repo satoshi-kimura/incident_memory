@@ -32,16 +32,17 @@ function relMin(m) {
 }
 
 const SOURCE_LABELS = {
-  LIVE_DEMO: ["Live demo", "Collected from CloudWatch and CloudTrail for the controlled demo workload."],
-  CAPTURED_DEMO: ["Captured demo", "Captured earlier from a controlled demo incident in this AWS environment."],
-  SEEDED_DEMO: ["Seeded demo", "Fictional historical incident, seeded for demonstration. Not a real production incident."],
+  LIVE_DEMO: ["Live demo", "Collected now from CloudWatch and CloudTrail in the isolated AWS demo environment."],
+  CAPTURED_DEMO: ["Captured demo", "Captured earlier from a controlled incident in the isolated AWS demo environment."],
+  SEEDED_DEMO: ["Seeded demo", "Fictional incident created for comparison. It did not occur in AWS."],
 };
 function sourceBadge(type) {
   const [label, title] = SOURCE_LABELS[type] || [type, ""];
   return `<span class="badge ${type === "LIVE_DEMO" ? "live" : ""}" title="${esc(title)}">${esc(label)}</span>`;
 }
 function statusBadge(status) {
-  const label = { NEW: "New · not analyzed", OPEN: "Open", RESOLVED: "Resolved" }[status] || status;
+  const label = { NEW: "New · not analyzed", OPEN: "Open · alarm active", RECOVERED: "Recovered · no resolution recorded",
+                  RESOLVED: "Resolved" }[status] || status;
   return `<span class="badge status-${esc((status || "").toLowerCase())}">${esc(label)}</span>`;
 }
 function evChip(id, memory) {
@@ -131,14 +132,15 @@ async function renderDashboard() {
 
 function incidentTable(rows) {
   return `<div class="table-wrap"><table class="dash-table">
-    <thead><tr><th>Incident</th><th>Status</th><th>Started</th><th>Trigger</th><th>Highest similarity</th><th>Source</th><th></th></tr></thead>
+    <thead><tr><th>Incident</th><th>Status</th><th>Started</th><th>Trigger</th><th>Closest historical match</th><th>Source</th><th></th></tr></thead>
     <tbody>${rows.map((r) => `
       <tr class="clickable" data-id="${esc(r.id)}">
         <td><div class="inc-id">${esc(r.id)}</div><div>${esc(r.title)}</div></td>
         <td>${statusBadge(r.status)}</td>
         <td class="mono">${esc(fmtDateTime(r.started_at))}</td>
         <td class="hide-sm"><span class="mono small">${esc(r.trigger?.alarm_name || "—")}</span></td>
-        <td class="match-cell">${r.best_match ? `<b>${r.best_match.score}%</b> <span class="muted">· ${esc(r.best_match.id)}</span>`
+        <td class="match-cell">${r.best_match ? `<b>${r.best_match.score}%</b> <span class="muted">· ${esc(r.best_match.id)}</span>
+            ${r.best_match.shared_sequence?.length ? `<div class="small muted shared">Shared pattern: ${esc(sharedPattern(r.best_match.shared_sequence))}</div>` : ""}`
           : `<span class="faint">${r.analyzed_at ? "No match ≥ 60%" : r.source_type === "LIVE_DEMO" ? "Not analyzed" : "—"}</span>`}</td>
         <td class="hide-sm">${sourceBadge(r.source_type)}</td>
         <td><a href="#/incidents/${esc(r.id)}">View Incident</a></td>
@@ -175,6 +177,8 @@ async function renderIncident(id, preloaded) {
         ${a?.analyzed_at ? `<span>Analyzed <b class="mono">${esc(fmtDateTime(a.analyzed_at))}</b></span>` : ""}
       </div>
     </section>
+    ${m.source_type === "SEEDED_DEMO" ? `<div class="notice" style="margin-bottom:16px"><b>Seeded demo data.</b>
+      This is a fictional incident created for comparison. It did not occur in AWS, and its evidence is illustrative.</div>` : ""}
     ${triggerPanel(m)}
     ${isLive ? analyzeBar(m) : ""}
     <div id="results">${isLive && !a ? "" : resultsHTML(m)}</div>`;
@@ -263,7 +267,7 @@ function resultsHTML(m) {
     </div>
     <section class="panel">${signalsHTML(m)}</section>
     ${isLive ? `<section class="panel">${similarHTML(m, matches, a)}</section>` : ""}
-    <section class="panel">${resolutionHTML(m, matches)}</section>
+    ${isLive ? "" : `<section class="panel">${resolutionHTML(m, matches)}</section>`}
     <section class="panel">${evidenceHTML(m)}</section>`;
 }
 
@@ -284,24 +288,59 @@ function heroHTML(m, matches, a) {
     </section>`;
   }
   const top = matches[0];
-  const next = top.next_events || [];
-  const nextText = next.length
-    ? next.slice(0, 2).map((e) => `${esc(e.description)} <b>${e.minutes_after_state} minutes</b> after the ${esc(e.after_description)}`).join("; ")
-    : "";
   return `<section class="hero" style="margin-top:16px">
     <div class="headline">
       <span class="score">${top.score}%</span>
       <span>similar to <a href="#/incidents/${esc(top.incident_id)}"><b>${esc(top.incident_id)}</b></a> — ${esc(top.title)}
-        <span class="faint small">· ${esc(fmtDateTime(top.started_at))}</span></span>
+        <span class="faint small">· ${esc(fmtDateTime(top.started_at))} · ${sourceBadge(top.source_type)}</span></span>
     </div>
-    <div>
-      <h3 style="margin-bottom:6px">Why ${top.score}% similar?</h3>
-      ${whyList(top.breakdown)}
+    ${top.shared_sequence?.length ? `<div class="shared-pattern">Shared pattern: <b>${esc(sharedPattern(top.shared_sequence, 6, true))}</b></div>` : ""}
+    <div class="grid-2" style="gap:20px">
+      <div>
+        <h3 style="margin-bottom:6px">Why ${top.score}% similar?</h3>
+        ${whyList(top.breakdown)}
+        ${top.differences?.length ? `<h3 style="margin:12px 0 6px">What is different</h3>
+          <ul class="why">${top.differences.map((d) => `<li><span class="why-icon" style="color:var(--text-2)">≠</span><span class="small">${esc(d)}</span></li>`).join("")}</ul>` : ""}
+      </div>
+      ${lastTimeHTML(top)}
     </div>
-    ${nextText ? `<div class="next">Last time: in ${esc(top.incident_id)}, ${nextText}.</div>` : ""}
-    ${top.resolution ? `<div class="muted">Previously resolved by: ${esc(top.resolution.action)} (recovered ${top.resolution.time_to_recovery_min} min after the alarm)</div>` : ""}
     <div class="small faint">Historical comparison, not a prediction. The score is calculated from five documented factors, not by AI.</div>
   </section>`;
+}
+
+function lastTimeHTML(top) {
+  const next = top.next_events || [];
+  const cause = (top.suspected_causes || []).find((c) => c.confidence === "HIGH") || (top.suspected_causes || [])[0];
+  const r = top.resolution;
+  const row = (k, v) => v ? `<div class="kv"><div class="k">${k}</div><div class="v">${v}</div></div>` : "";
+  return `<div class="last-time">
+    <h3>What happened last time?</h3>
+    ${next.length ? `<div class="next">After the same state, ${next.slice(0, 2).map((e) =>
+      `${esc(e.description)}${e.token.startsWith("alarm:") ? " fired" : ""} <b>${e.minutes_after_state} min</b> after the ${esc(e.after_description)}`).join("; ")}.</div>` : ""}
+    ${row("Previous suspected cause", cause ? `${esc(cause.description)} <span class="faint small">(${esc(cause.confidence)})</span>` : "")}
+    ${row("Previous action", r ? esc(r.action) : "")}
+    ${row("Previous outcome", r ? esc(r.result) : "")}
+    ${row("Recovery time", r ? `${r.time_to_recovery_min} minutes after the alarm` : "")}
+  </div>`;
+}
+
+const SHORT_TOKEN = { Errors: "errors", Duration: "latency", ConcurrentExecutions: "concurrency", Throttles: "throttling",
+  Invocations: "traffic", DatabaseConnections: "DB connections", FreeableMemory: "DB memory", WriteThrottleEvents: "write throttling" };
+
+function sharedPattern(tokens, max = 3, withAlarm = false) {
+  const words = [];
+  for (const t of tokens) {
+    if (t.startsWith("change:")) words.push(`${t.slice(7)} change`);
+    else if (t.startsWith("alarm:")) { if (withAlarm) words.push("alarm"); }
+    else {
+      const [name, dir] = t.split(":");
+      const metric = name.split(".").pop();
+      words.push(`${SHORT_TOKEN[metric] || metric}${dir === "down" ? " ↓" : ""}`);
+    }
+  }
+  const nonAlarm = words.filter((w) => w !== "alarm");
+  const shown = withAlarm ? words.slice(0, max) : nonAlarm.slice(0, max);
+  return shown.join(" → ");
 }
 
 function whyList(breakdown) {
@@ -344,7 +383,7 @@ function timelineHTML(m) {
   const items = m.timeline || [];
   const t0 = (m.trigger && m.trigger.ts) || m.started_at;
   const labels = { change: "AWS change", metric: "Metric signal", alarm: "Alarm", recovery: "Recovery", action: "Action" };
-  return `<div class="section-head"><h2>Timeline</h2><span class="small muted">UTC · relative to alarm</span></div>
+  return `<div class="section-head"><h2>Timeline</h2><span class="small muted">UTC · minutes relative to Started (alarm)</span></div>
     ${items.length ? `<ol class="timeline">${items.map((e) => `
       <li class="${esc(e.category)}">
         <div class="t">${esc(fmtTime(e.ts))}<small>${esc(relMin(minutesBetween(t0, e.ts)))}</small></div>
@@ -486,6 +525,8 @@ function similarHTML(m, matches, a) {
         ${sourceBadge(s.source_type)}
       </div>
       ${x.explanations && x.explanations[s.incident_id] ? `<div>${esc(x.explanations[s.incident_id])}</div>` : ""}
+      ${s.shared_sequence?.length ? `<div class="small"><span class="faint">Shared pattern:</span> ${esc(sharedPattern(s.shared_sequence, 6, true))}</div>` : ""}
+      ${s.differences?.length ? `<div class="small"><span class="faint">Different:</span> ${s.differences.map(esc).join(" · ")}</div>` : ""}
       <div class="factors">${s.breakdown.map((b) => `<div class="factor">
         <span>${esc(b.label)}</span>
         ${b.omitted ? `<span class="pts">excluded</span>` : `<span class="row" style="gap:6px;flex-wrap:nowrap"><span class="bar" style="width:60px"><i style="width:${(b.value * 100).toFixed(0)}%"></i></span><span class="pts">${b.points}/${b.weight}</span></span>`}
