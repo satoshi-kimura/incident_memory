@@ -50,7 +50,14 @@ DescribeAlarms). It returned the live Incident Memory resources:
 `mcp-proxy-for-aws/1.7.0`, identity `IAMUser/terraform`, region us-east-1. This is
 independent, AWS-side proof of the agent's MCP connection to the account.
 
-## 5. The whole build was done by the agent against AWS
+## 5. The agent calls the MCP tool directly in its session
+
+`aws-mcp/05-agent-session-call.md`. Inside the Claude Code session, the agent called the tool
+**`aws-mcp - aws___run_script`**. It ran as the project's dedicated IAM user `user/sandbox`
+(limited to `incident-memory-*` in us-east-1), returned the Incident Memory resources, and then
+queried CloudTrail through the same tool.
+
+## 6. The whole build was done by the agent against AWS
 
 See [DEVELOPMENT_LOG.md](DEVELOPMENT_LOG.md). The agent verified the AWS identity, probed Bedrock
 model access, ran every Terraform plan through the safety gate and applied it, ran the controlled
@@ -58,5 +65,5 @@ incident scenarios, and verified the live app. Terraform plan and apply outputs 
 
 ## Screenshot to attach (taken by the submitter)
 
-- [ ] `screenshots/05-claude-code-aws-mcp.png`: Claude Code's `/mcp` panel showing **aws-mcp ✔ connected**,
-      ideally next to an agent turn that calls an `aws___` tool.
+- [ ] `screenshots/05-agent-aws-mcp-call.png`: the Claude Code turn showing the `aws-mcp - aws___run_script` call and its result
+- [ ] `screenshots/06-claude-code-aws-mcp.png`: Claude Code's `/mcp` panel showing **aws-mcp ✔ connected**
