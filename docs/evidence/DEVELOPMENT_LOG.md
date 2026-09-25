@@ -13,6 +13,12 @@ AWS skills) registered in Claude Code, the tool list, a read-only call through t
 returning this account's Incident Memory resources, and CloudTrail events from
 `aws-mcp.amazonaws.com` recorded by AWS.
 
+## Human decisions vs. agent execution
+
+See [SUBMISSION.md → Who did what](../SUBMISSION.md#who-did-what-human-decisions-agent-execution).
+The rows below record the agent's execution; the builder's reviews that triggered changes are noted in the
+rows from 2026-09-25 06:20 and 16:20.
+
 ## Timeline
 
 | Time (UTC) | Step |

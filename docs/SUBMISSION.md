@@ -73,6 +73,24 @@ knowledge lives in one or two people's heads.
   (alarms, metrics, logs), CloudTrail (event history), Amazon Bedrock, EventBridge, IAM.
 - **Architecture:** [ARCHITECTURE.md](ARCHITECTURE.md), diagram [architecture.png](architecture.png).
 
+### Who did what: human decisions, agent execution
+
+The builder acted as product owner and reviewer. The coding agent did the implementation and operations work.
+The decisions that shaped the product were made by the builder:
+
+| Builder decided or reviewed | Agent executed |
+|---|---|
+| **Product concept and scope.** Wrote the specification (v1, then v2): the Incident Memory model, five similarity factors and weights, a 60 % threshold, evidence IDs, and what is out of scope | Data model, collectors, signal detection, similarity algorithm, API, UI, 28 tests |
+| **Safety boundary.** Deploy into an existing AWS account that also runs a production workload, but strictly isolated: own prefix, tags, IAM user, Terraform state, and a plan gate that stops on any change outside the project | Terraform for about 40 resources, the plan safety gate (`scripts/check_plan.py`), least-privilege IAM |
+| **The core demo message.** Rejected a 96 % match against a near-identical incident as "looks staged". Asked for a *different cause with a similar degradation pattern* at about 80 %, plus "why similar", "what is different" and "what happened last time" | Reworked the demo workload and history. The unchanged algorithm now scores 82 %. New UI sections |
+| **Data consistency review.** Asked that Started always mean the alarm time, that OPEN not carry an end time, that evidence IDs follow time order, and that alarms agree with thresholds, each backed by automated tests | Fixes plus `tests/test_consistency.py` |
+| **No production data.** Chose to build comparison incidents in the isolated demo environment instead of sanitizing real production incidents; all demo data is labeled | Controlled incident runs with real CloudWatch and CloudTrail evidence; seeded history labeled fictional |
+| **Every infrastructure change approved.** Read the plan summary and approved each `terraform apply` | Planned, checked, applied, verified on the public URL |
+| **Agent connection.** Connected the coding agent to AWS with the Agent Toolkit for AWS, through a dedicated IAM user limited to the project's resources | Used the AWS MCP Server for AWS operations |
+
+The agent also found and fixed its own mistakes during verification (a demo escalation bug, an earlier episode
+leaking into a timeline, over-confident AI wording). The builder decided when the result was good enough to ship.
+
 ## Responsible AI and safety
 
 - The public app is read-only toward AWS resources. It performs no remediation and no configuration changes.
