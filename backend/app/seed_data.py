@@ -11,37 +11,41 @@ from .memory import alarm_token, build_pattern, iso, magnitude, metric_family, s
 
 FN = "incident-memory-demo-orders-api"
 TABLE = "incident-memory-demo-orders"
+DB = "incident-memory-demo-orders-db"
+DB_PARAMS = "incident-memory-demo-orders-db-params"
 
 SAMPLES = [
     {
         "id": "INC-0012",
-        "title": "Orders API latency after configuration change (DB_POOL_SIZE 20 → 80)",
-        "summary": ("Release v2.14 changed the function configuration and raised DB_POOL_SIZE from 20 to 80. "
-                    "Average duration rose three minutes later and concurrency followed; errors began eight "
-                    "minutes after the latency alarm. Rolling back the configuration restored normal behavior."),
+        "title": "Orders API latency after database parameter change (max_connections 400 → 1000)",
+        "summary": ("A database parameter group change raised max_connections on orders-db from 400 to 1000. "
+                    "Database connections surged within a minute, then Lambda duration and concurrency rose and the "
+                    "latency alarm fired. Errors began four minutes after the latency alarm. Reverting the parameter "
+                    "restored normal behavior."),
         "start": "2026-07-14T22:37:00Z",
         "changes": [
-            (0, "configuration", "Lambda", FN, "lambda:function", "UpdateFunctionConfiguration20150331v2",
-             "Function configuration updated: release v2.14 (DB_POOL_SIZE 20 → 80)"),
+            (0, "configuration", "RDS", DB_PARAMS, "rds:db-parameter-group", "ModifyDBParameterGroup",
+             "DB parameter group updated: max_connections 400 → 1000"),
         ],
         "signals": [
-            (3, 9, "Lambda", FN, "lambda:function", "Duration", "up", 92, 2140, "Milliseconds"),
-            (5, 9, "Lambda", FN, "lambda:function", "ConcurrentExecutions", "up", 1, 6, "Count"),
-            (15, 18, "Lambda", FN, "lambda:function", "Errors", "up", 0, 41, "Count"),
+            (1, 16, "RDS", DB, "rds:db", "DatabaseConnections", "up", 180, 940, "Count"),
+            (3, 16, "Lambda", FN, "lambda:function", "Duration", "up", 95, 2310, "Milliseconds"),
+            (5, 16, "Lambda", FN, "lambda:function", "ConcurrentExecutions", "up", 1, 4, "Count"),
+            (11, 16, "Lambda", FN, "lambda:function", "Errors", "up", 0, 38, "Count"),
         ],
         "alarms": [
-            (7, "incident-memory-demo-orders-api-latency-high", "Lambda", "Duration", "GreaterThanThreshold", 1180, 1000, True),
-            (16, "incident-memory-demo-orders-api-errors-high", "Lambda", "Errors", "GreaterThanThreshold", 41, 5, False),
+            (7, "incident-memory-demo-orders-api-latency-high", "Lambda", "Duration", "GreaterThanThreshold", 1240, 1000, True),
+            (12, "incident-memory-demo-orders-api-errors-high", "Lambda", "Errors", "GreaterThanThreshold", 17, 5, False),
         ],
         "causes": [
-            ("The configuration change that raised DB_POOL_SIZE preceded the duration increase by three minutes; "
-             "larger connection pools saturated the downstream database and slowed each invocation.",
+            ("Raising max_connections let the connection count surge; the database spent memory and CPU on "
+             "connection handling, queries slowed, and every invocation took longer.",
              ["CT-001", "CW-001", "CW-002"], "HIGH"),
-            ("Longer invocations increased concurrency until requests exceeded the function timeout, producing errors.",
-             ["CW-002", "CW-003"], "MEDIUM"),
+            ("Slower invocations increased concurrency until requests exceeded the downstream timeout, producing errors.",
+             ["CW-002", "CW-003", "CW-004"], "MEDIUM"),
         ],
-        "resolution": (18, 25, "Rolled back the function configuration to release v2.13 (DB_POOL_SIZE 20).",
-                       "Duration and errors returned to baseline; both alarms returned to OK."),
+        "resolution": (15, 21, "Reverted max_connections to 400 in the DB parameter group and rebooted the writer.",
+                       "Connections, duration and errors returned to baseline; both alarms returned to OK."),
     },
     {
         "id": "INC-0009",

@@ -4,7 +4,7 @@ score = 100 * sum(weight_i * value_i) / sum(weight_i over available factors)
 value_i in [0, 1]. The score is computed here, never by the LLM.
 See docs/SIMILARITY.md for the full definition.
 """
-from .memory import describe_token
+from .memory import describe_resource_type, describe_token
 
 WEIGHTS = {
     "trigger": 25,
@@ -40,10 +40,18 @@ def _trigger(cur, hist):
     return 0.0, f"Different alarm ({c['service']} {c['metric']} vs {h['service']} {h['metric']})"
 
 
+def _names(types):
+    return ", ".join(describe_resource_type(t) for t in sorted(types))
+
+
 def _resources(cur, hist):
-    shared = sorted(set(cur["resource_types"]) & set(hist["resource_types"]))
-    v = _jaccard(cur["resource_types"], hist["resource_types"])
-    return v, "Shared resource types: " + (", ".join(shared) if shared else "none")
+    c, h = set(cur["resource_types"]), set(hist["resource_types"])
+    parts = [f"Shared: {_names(c & h)}" if c & h else "No shared resource types"]
+    if h - c:
+        parts.append(f"only in the historical incident: {_names(h - c)}")
+    if c - h:
+        parts.append(f"only in this incident: {_names(c - h)}")
+    return _jaccard(c, h), "; ".join(parts)
 
 
 def _signals(cur, hist):
@@ -58,7 +66,10 @@ def _signals(cur, hist):
     v = 0.5 * (len(common) / len(c)) + 0.5 * _jaccard(c, h)
     if not common:
         return v, "No shared signals"
-    return v, f"{len(common)} of {len(c)} current signals also seen: " + "; ".join(describe_token(t) for t in common)
+    reason = f"{len(common)} of {len(c)} current signals also seen: " + ", ".join(describe_token(t) for t in common)
+    if h - c:
+        reason += "; only in the historical incident: " + ", ".join(describe_token(t) for t in sorted(h - c))
+    return v, reason
 
 
 def _sequence(cur, hist):
@@ -79,8 +90,14 @@ def _sequence(cur, hist):
 def _change(cur, hist):
     c, h = cur["preceding_change"], hist["preceding_change"]
     if c == h:
-        return 1.0, ("Neither incident was preceded by a detected change" if c == "none"
-                     else f"Both preceded by a {c} change")
+        if c == "none":
+            return 1.0, "Neither incident was preceded by a detected change"
+        reason = f"Both preceded by a {c} change"
+        cr, hr = cur.get("preceding_change_resource"), hist.get("preceding_change_resource")
+        if cr and hr and cr != hr:
+            reason += (f", but to a different resource ({describe_resource_type(cr)} here, "
+                       f"{describe_resource_type(hr)} in the historical incident)")
+        return 1.0, reason
     cloudtrail = {"deployment", "configuration", "scaling"}
     if c in cloudtrail and h in cloudtrail:
         return 0.5, f"Both preceded by an AWS change ({c} vs {h})"

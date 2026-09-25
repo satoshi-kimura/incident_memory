@@ -37,7 +37,8 @@ def list_incidents():
     store = get_store()
     memories = store.list()
     # Episodes already captured as historical memories are not listed again as live incidents.
-    known = {m["id"] for m in memories} | {m["captured_from"] for m in memories if m.get("captured_from")}
+    known = ({m["id"] for m in memories} | {m["captured_from"] for m in memories if m.get("captured_from")}
+             | store.hidden_episodes())
     warnings = []
     try:
         for ep in collectors.discover_episodes():
@@ -49,9 +50,12 @@ def list_incidents():
 
 
 def get_incident(incident_id):
-    memory = get_store().get(incident_id)
+    store = get_store()
+    memory = store.get(incident_id)
     if memory:
         return memory
+    if incident_id in store.hidden_episodes():
+        raise NotFound(incident_id)
     for ep in _episodes_or_empty():
         if ep["id"] == incident_id:
             return _new_incident(ep)
@@ -97,8 +101,9 @@ def analyze(incident_id):
     if existing and time.time() - parse_ts(existing["analysis"]["collected_at"]).timestamp() < config.COLLECTION_CACHE_SECONDS:
         return existing, False
 
-    if existing is None and any(m.get("captured_from") == incident_id for m in store.list()):
-        raise NotAnalyzable("This demo incident was captured as a historical memory.")
+    if existing is None and (incident_id in store.hidden_episodes()
+                             or any(m.get("captured_from") == incident_id for m in store.list())):
+        raise NotAnalyzable("This demo incident is not available for analysis.")
     episode = next((e for e in _episodes_or_empty() if e["id"] == incident_id), None)
     if episode is None and existing is None:
         raise NotFound(incident_id)

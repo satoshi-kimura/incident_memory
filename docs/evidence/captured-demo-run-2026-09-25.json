@@ -1,0 +1,888 @@
+{
+ "id": "INC-0012",
+ "title": "Orders API latency after configuration change (DB_POOL_SIZE 20 → 80)",
+ "source_type": "CAPTURED_DEMO",
+ "status": "RESOLVED",
+ "created_at": "2026-09-25T04:14:01Z",
+ "started_at": "2026-09-25T04:04:48Z",
+ "ended_at": "2026-09-25T04:13:14Z",
+ "region": "us-east-1",
+ "trigger": {
+  "alarm_name": "incident-memory-demo-orders-api-latency-high",
+  "ts": "2026-09-25T04:04:48Z",
+  "service": "Lambda",
+  "metric": "Duration",
+  "alarm_category": "latency",
+  "comparison": "GreaterThanThreshold",
+  "threshold": 1000.0,
+  "value": 1338.0529164583331,
+  "unit": "Milliseconds",
+  "trigger_evidence_id": "CW-004"
+ },
+ "timeline": [
+  {
+   "evidence_id": "CT-001",
+   "ts": "2026-09-25T03:56:52Z",
+   "service": "Lambda",
+   "category": "change",
+   "description": "UpdateFunctionConfiguration on incident-memory-demo-orders-api (configuration change)",
+   "source": "CloudTrail"
+  },
+  {
+   "evidence_id": "CW-001",
+   "ts": "2026-09-25T03:59:00Z",
+   "service": "Lambda",
+   "category": "metric",
+   "description": "Duration increased from 87 ms to 2,422 ms (27.9x baseline)",
+   "source": "CloudWatch"
+  },
+  {
+   "evidence_id": "CW-002",
+   "ts": "2026-09-25T04:02:00Z",
+   "service": "Lambda",
+   "category": "metric",
+   "description": "ConcurrentExecutions increased from 1 to 3 (3.0x baseline)",
+   "source": "CloudWatch"
+  },
+  {
+   "evidence_id": "CW-004",
+   "ts": "2026-09-25T04:04:48Z",
+   "service": "Lambda",
+   "category": "alarm",
+   "description": "Alarm incident-memory-demo-orders-api-latency-high entered ALARM (Duration 1,338 ms, threshold 1,000 ms)",
+   "source": "CloudWatch",
+   "alarm_token": "alarm:Lambda.Duration"
+  },
+  {
+   "evidence_id": "CW-003",
+   "ts": "2026-09-25T04:08:00Z",
+   "service": "Lambda",
+   "category": "metric",
+   "description": "Errors increased from 0 to 33 (up from zero)",
+   "source": "CloudWatch"
+  },
+  {
+   "evidence_id": "CW-005",
+   "ts": "2026-09-25T04:09:14Z",
+   "service": "Lambda",
+   "category": "alarm",
+   "description": "Alarm incident-memory-demo-orders-api-errors-high entered ALARM (Errors 10, threshold 5)",
+   "source": "CloudWatch",
+   "alarm_token": "alarm:Lambda.Errors"
+  },
+  {
+   "evidence_id": "CT-002",
+   "ts": "2026-09-25T04:11:24Z",
+   "service": null,
+   "category": "action",
+   "description": "Rolled back the function configuration to release v2.13 (DB_POOL_SIZE 20).",
+   "source": "Operator record"
+  },
+  {
+   "evidence_id": "CT-002",
+   "ts": "2026-09-25T04:11:24Z",
+   "service": "Lambda",
+   "category": "change",
+   "description": "UpdateFunctionConfiguration on incident-memory-demo-orders-api (configuration change)",
+   "source": "CloudTrail"
+  },
+  {
+   "evidence_id": "CW-006",
+   "ts": "2026-09-25T04:12:48Z",
+   "service": "Lambda",
+   "category": "recovery",
+   "description": "Alarm incident-memory-demo-orders-api-latency-high returned to OK",
+   "source": "CloudWatch"
+  },
+  {
+   "evidence_id": "CW-007",
+   "ts": "2026-09-25T04:13:14Z",
+   "service": "Lambda",
+   "category": "recovery",
+   "description": "Alarm incident-memory-demo-orders-api-errors-high returned to OK",
+   "source": "CloudWatch"
+  }
+ ],
+ "signals": [
+  {
+   "token": "Lambda.Duration:up",
+   "type": "latency increased",
+   "service": "Lambda",
+   "resource": "incident-memory-demo-orders-api",
+   "resource_type": "lambda:function",
+   "metric": "Duration",
+   "direction": "up",
+   "baseline": 86.928,
+   "peak": 2422.248,
+   "peak_at": "2026-09-25T04:07:00Z",
+   "change_pct": 2686.5,
+   "magnitude": "27.9x baseline",
+   "unit": "Milliseconds",
+   "onset": "2026-09-25T03:59:00Z",
+   "until": "2026-09-25T04:11:00Z",
+   "evidence_ids": [
+    "CW-001"
+   ]
+  },
+  {
+   "token": "Lambda.ConcurrentExecutions:up",
+   "type": "concurrency/saturation increased",
+   "service": "Lambda",
+   "resource": "incident-memory-demo-orders-api",
+   "resource_type": "lambda:function",
+   "metric": "ConcurrentExecutions",
+   "direction": "up",
+   "baseline": 1.0,
+   "peak": 3.0,
+   "peak_at": "2026-09-25T04:07:00Z",
+   "change_pct": 200.0,
+   "magnitude": "3.0x baseline",
+   "unit": "Count",
+   "onset": "2026-09-25T04:02:00Z",
+   "until": "2026-09-25T04:11:00Z",
+   "evidence_ids": [
+    "CW-002"
+   ]
+  },
+  {
+   "token": "Lambda.Errors:up",
+   "type": "error rate increased",
+   "service": "Lambda",
+   "resource": "incident-memory-demo-orders-api",
+   "resource_type": "lambda:function",
+   "metric": "Errors",
+   "direction": "up",
+   "baseline": 0.0,
+   "peak": 33.0,
+   "peak_at": "2026-09-25T04:10:00Z",
+   "change_pct": null,
+   "magnitude": "up from zero",
+   "unit": "Count",
+   "onset": "2026-09-25T04:08:00Z",
+   "until": "2026-09-25T04:11:00Z",
+   "evidence_ids": [
+    "CW-003"
+   ]
+  }
+ ],
+ "changes": [
+  {
+   "ts": "2026-09-25T03:56:52Z",
+   "change_category": "configuration",
+   "service": "Lambda",
+   "resource": "incident-memory-demo-orders-api",
+   "resource_type": "lambda:function",
+   "event_name": "UpdateFunctionConfiguration20150331v2",
+   "evidence_id": "CT-001"
+  },
+  {
+   "ts": "2026-09-25T04:11:24Z",
+   "change_category": "configuration",
+   "service": "Lambda",
+   "resource": "incident-memory-demo-orders-api",
+   "resource_type": "lambda:function",
+   "event_name": "UpdateFunctionConfiguration20150331v2",
+   "evidence_id": "CT-002"
+  }
+ ],
+ "suspected_causes": [
+  {
+   "description": "The configuration change that raised DB_POOL_SIZE preceded the duration increase by two minutes; larger connection pools saturated the downstream database and slowed each invocation.",
+   "supporting_evidence": [
+    "CT-001",
+    "CW-001",
+    "CW-002"
+   ],
+   "confidence": "HIGH",
+   "reasoning": ""
+  },
+  {
+   "description": "Slower invocations began to exceed the downstream timeout, producing errors about three minutes after the latency alarm.",
+   "supporting_evidence": [
+    "CW-001",
+    "CW-003",
+    "CW-005"
+   ],
+   "confidence": "MEDIUM",
+   "reasoning": ""
+  }
+ ],
+ "resolution": {
+  "action": "Rolled back the function configuration to release v2.13 (DB_POOL_SIZE 20).",
+  "ts": "2026-09-25T04:11:24Z",
+  "result": "Duration and errors returned to baseline; both alarms returned to OK within two minutes of the rollback.",
+  "time_to_recovery_min": 8,
+  "supporting_evidence": [
+   "CT-002",
+   "CW-007"
+  ]
+ },
+ "evidence": [
+  {
+   "id": "CT-001",
+   "kind": "cloudtrail_event",
+   "source": "CloudTrail",
+   "summary": "UpdateFunctionConfiguration on incident-memory-demo-orders-api (configuration change)",
+   "event_name": "UpdateFunctionConfiguration20150331v2",
+   "resource": "incident-memory-demo-orders-api",
+   "ts": "2026-09-25T03:56:52Z",
+   "caller_type": "AssumedRole"
+  },
+  {
+   "id": "CT-002",
+   "kind": "cloudtrail_event",
+   "source": "CloudTrail",
+   "summary": "UpdateFunctionConfiguration on incident-memory-demo-orders-api (configuration change)",
+   "event_name": "UpdateFunctionConfiguration20150331v2",
+   "resource": "incident-memory-demo-orders-api",
+   "ts": "2026-09-25T04:11:24Z",
+   "caller_type": "AssumedRole"
+  },
+  {
+   "id": "CW-001",
+   "kind": "cloudwatch_metric",
+   "source": "CloudWatch",
+   "summary": "Duration increased from 87 ms to 2,422 ms (27.9x baseline)",
+   "metric": "Duration",
+   "stat": "Average",
+   "unit": "Milliseconds",
+   "baseline": 86.928,
+   "peak": 2422.248,
+   "onset": "2026-09-25T03:59:00Z",
+   "until": "2026-09-25T04:11:00Z"
+  },
+  {
+   "id": "CW-002",
+   "kind": "cloudwatch_metric",
+   "source": "CloudWatch",
+   "summary": "ConcurrentExecutions increased from 1 to 3 (3.0x baseline)",
+   "metric": "ConcurrentExecutions",
+   "stat": "Maximum",
+   "unit": "Count",
+   "baseline": 1.0,
+   "peak": 3.0,
+   "onset": "2026-09-25T04:02:00Z",
+   "until": "2026-09-25T04:11:00Z"
+  },
+  {
+   "id": "CW-003",
+   "kind": "cloudwatch_metric",
+   "source": "CloudWatch",
+   "summary": "Errors increased from 0 to 33 (up from zero)",
+   "metric": "Errors",
+   "stat": "Sum",
+   "unit": "Count",
+   "baseline": 0.0,
+   "peak": 33.0,
+   "onset": "2026-09-25T04:08:00Z",
+   "until": "2026-09-25T04:11:00Z"
+  },
+  {
+   "id": "CW-004",
+   "kind": "cloudwatch_alarm",
+   "source": "CloudWatch",
+   "summary": "Alarm incident-memory-demo-orders-api-latency-high entered ALARM (Duration 1,338 ms, threshold 1,000 ms)",
+   "alarm_name": "incident-memory-demo-orders-api-latency-high",
+   "state": "ALARM",
+   "ts": "2026-09-25T04:04:48Z"
+  },
+  {
+   "id": "CW-005",
+   "kind": "cloudwatch_alarm",
+   "source": "CloudWatch",
+   "summary": "Alarm incident-memory-demo-orders-api-errors-high entered ALARM (Errors 10, threshold 5)",
+   "alarm_name": "incident-memory-demo-orders-api-errors-high",
+   "state": "ALARM",
+   "ts": "2026-09-25T04:09:14Z"
+  },
+  {
+   "id": "CW-006",
+   "kind": "cloudwatch_alarm",
+   "source": "CloudWatch",
+   "summary": "Alarm incident-memory-demo-orders-api-latency-high returned to OK",
+   "alarm_name": "incident-memory-demo-orders-api-latency-high",
+   "state": "OK",
+   "ts": "2026-09-25T04:12:48Z"
+  },
+  {
+   "id": "CW-007",
+   "kind": "cloudwatch_alarm",
+   "source": "CloudWatch",
+   "summary": "Alarm incident-memory-demo-orders-api-errors-high returned to OK",
+   "alarm_name": "incident-memory-demo-orders-api-errors-high",
+   "state": "OK",
+   "ts": "2026-09-25T04:13:14Z"
+  }
+ ],
+ "series": {
+  "Duration": [
+   [
+    "2026-09-25T03:48:00Z",
+    81.6925
+   ],
+   [
+    "2026-09-25T03:49:00Z",
+    86.6369387755102
+   ],
+   [
+    "2026-09-25T03:50:00Z",
+    87.5874
+   ],
+   [
+    "2026-09-25T03:51:00Z",
+    86.71568625490195
+   ],
+   [
+    "2026-09-25T03:52:00Z",
+    87.5965306122449
+   ],
+   [
+    "2026-09-25T03:53:00Z",
+    85.61700000000002
+   ],
+   [
+    "2026-09-25T03:54:00Z",
+    87.49639999999998
+   ],
+   [
+    "2026-09-25T03:55:00Z",
+    87.07959999999999
+   ],
+   [
+    "2026-09-25T03:56:00Z",
+    86.92755097959181
+   ],
+   [
+    "2026-09-25T03:57:00Z",
+    86.71199999999999
+   ],
+   [
+    "2026-09-25T03:58:00Z",
+    90.3028
+   ],
+   [
+    "2026-09-25T03:59:00Z",
+    262.9221999999999
+   ],
+   [
+    "2026-09-25T04:00:00Z",
+    535.6994000000001
+   ],
+   [
+    "2026-09-25T04:01:00Z",
+    804.3304081632652
+   ],
+   [
+    "2026-09-25T04:02:00Z",
+    1068.3133999999998
+   ],
+   [
+    "2026-09-25T04:03:00Z",
+    1341.8649997999999
+   ],
+   [
+    "2026-09-25T04:04:00Z",
+    1610.4005999999995
+   ],
+   [
+    "2026-09-25T04:05:00Z",
+    1877.648200000001
+   ],
+   [
+    "2026-09-25T04:06:00Z",
+    2150.7488000000003
+   ],
+   [
+    "2026-09-25T04:07:00Z",
+    2422.2479999999996
+   ],
+   [
+    "2026-09-25T04:08:00Z",
+    1990.1635999999996
+   ],
+   [
+    "2026-09-25T04:09:00Z",
+    1597.2658
+   ],
+   [
+    "2026-09-25T04:10:00Z",
+    1081.2586000000001
+   ],
+   [
+    "2026-09-25T04:11:00Z",
+    620.2391666666666
+   ],
+   [
+    "2026-09-25T04:12:00Z",
+    86.17980000000003
+   ],
+   [
+    "2026-09-25T04:13:00Z",
+    85.09153846153845
+   ]
+  ],
+  "ConcurrentExecutions": [
+   [
+    "2026-09-25T03:48:00Z",
+    1.0
+   ],
+   [
+    "2026-09-25T03:49:00Z",
+    1.0
+   ],
+   [
+    "2026-09-25T03:50:00Z",
+    1.0
+   ],
+   [
+    "2026-09-25T03:51:00Z",
+    1.0
+   ],
+   [
+    "2026-09-25T03:52:00Z",
+    1.0
+   ],
+   [
+    "2026-09-25T03:53:00Z",
+    1.0
+   ],
+   [
+    "2026-09-25T03:54:00Z",
+    1.0
+   ],
+   [
+    "2026-09-25T03:55:00Z",
+    1.0
+   ],
+   [
+    "2026-09-25T03:56:00Z",
+    1.0
+   ],
+   [
+    "2026-09-25T03:57:00Z",
+    1.0
+   ],
+   [
+    "2026-09-25T03:58:00Z",
+    1.0
+   ],
+   [
+    "2026-09-25T03:59:00Z",
+    1.0
+   ],
+   [
+    "2026-09-25T04:00:00Z",
+    1.0
+   ],
+   [
+    "2026-09-25T04:01:00Z",
+    1.0
+   ],
+   [
+    "2026-09-25T04:02:00Z",
+    2.0
+   ],
+   [
+    "2026-09-25T04:03:00Z",
+    2.0
+   ],
+   [
+    "2026-09-25T04:04:00Z",
+    2.0
+   ],
+   [
+    "2026-09-25T04:05:00Z",
+    2.0
+   ],
+   [
+    "2026-09-25T04:06:00Z",
+    2.0
+   ],
+   [
+    "2026-09-25T04:07:00Z",
+    3.0
+   ],
+   [
+    "2026-09-25T04:08:00Z",
+    3.0
+   ],
+   [
+    "2026-09-25T04:09:00Z",
+    3.0
+   ],
+   [
+    "2026-09-25T04:10:00Z",
+    3.0
+   ],
+   [
+    "2026-09-25T04:11:00Z",
+    3.0
+   ],
+   [
+    "2026-09-25T04:12:00Z",
+    1.0
+   ],
+   [
+    "2026-09-25T04:13:00Z",
+    1.0
+   ]
+  ],
+  "Errors": [
+   [
+    "2026-09-25T03:48:00Z",
+    0.0
+   ],
+   [
+    "2026-09-25T03:49:00Z",
+    0.0
+   ],
+   [
+    "2026-09-25T03:50:00Z",
+    0.0
+   ],
+   [
+    "2026-09-25T03:51:00Z",
+    0.0
+   ],
+   [
+    "2026-09-25T03:52:00Z",
+    0.0
+   ],
+   [
+    "2026-09-25T03:53:00Z",
+    0.0
+   ],
+   [
+    "2026-09-25T03:54:00Z",
+    0.0
+   ],
+   [
+    "2026-09-25T03:55:00Z",
+    0.0
+   ],
+   [
+    "2026-09-25T03:56:00Z",
+    0.0
+   ],
+   [
+    "2026-09-25T03:57:00Z",
+    0.0
+   ],
+   [
+    "2026-09-25T03:58:00Z",
+    0.0
+   ],
+   [
+    "2026-09-25T03:59:00Z",
+    0.0
+   ],
+   [
+    "2026-09-25T04:00:00Z",
+    0.0
+   ],
+   [
+    "2026-09-25T04:01:00Z",
+    0.0
+   ],
+   [
+    "2026-09-25T04:02:00Z",
+    0.0
+   ],
+   [
+    "2026-09-25T04:03:00Z",
+    0.0
+   ],
+   [
+    "2026-09-25T04:04:00Z",
+    0.0
+   ],
+   [
+    "2026-09-25T04:05:00Z",
+    0.0
+   ],
+   [
+    "2026-09-25T04:06:00Z",
+    0.0
+   ],
+   [
+    "2026-09-25T04:07:00Z",
+    0.0
+   ],
+   [
+    "2026-09-25T04:08:00Z",
+    14.0
+   ],
+   [
+    "2026-09-25T04:09:00Z",
+    23.0
+   ],
+   [
+    "2026-09-25T04:10:00Z",
+    33.0
+   ],
+   [
+    "2026-09-25T04:11:00Z",
+    11.0
+   ],
+   [
+    "2026-09-25T04:12:00Z",
+    0.0
+   ],
+   [
+    "2026-09-25T04:13:00Z",
+    0.0
+   ]
+  ],
+  "Throttles": [
+   [
+    "2026-09-25T03:48:00Z",
+    0.0
+   ],
+   [
+    "2026-09-25T03:49:00Z",
+    0.0
+   ],
+   [
+    "2026-09-25T03:50:00Z",
+    0.0
+   ],
+   [
+    "2026-09-25T03:51:00Z",
+    0.0
+   ],
+   [
+    "2026-09-25T03:52:00Z",
+    0.0
+   ],
+   [
+    "2026-09-25T03:53:00Z",
+    0.0
+   ],
+   [
+    "2026-09-25T03:54:00Z",
+    0.0
+   ],
+   [
+    "2026-09-25T03:55:00Z",
+    0.0
+   ],
+   [
+    "2026-09-25T03:56:00Z",
+    0.0
+   ],
+   [
+    "2026-09-25T03:57:00Z",
+    0.0
+   ],
+   [
+    "2026-09-25T03:58:00Z",
+    0.0
+   ],
+   [
+    "2026-09-25T03:59:00Z",
+    0.0
+   ],
+   [
+    "2026-09-25T04:00:00Z",
+    0.0
+   ],
+   [
+    "2026-09-25T04:01:00Z",
+    0.0
+   ],
+   [
+    "2026-09-25T04:02:00Z",
+    0.0
+   ],
+   [
+    "2026-09-25T04:03:00Z",
+    0.0
+   ],
+   [
+    "2026-09-25T04:04:00Z",
+    0.0
+   ],
+   [
+    "2026-09-25T04:05:00Z",
+    0.0
+   ],
+   [
+    "2026-09-25T04:06:00Z",
+    0.0
+   ],
+   [
+    "2026-09-25T04:07:00Z",
+    0.0
+   ],
+   [
+    "2026-09-25T04:08:00Z",
+    0.0
+   ],
+   [
+    "2026-09-25T04:09:00Z",
+    0.0
+   ],
+   [
+    "2026-09-25T04:10:00Z",
+    0.0
+   ],
+   [
+    "2026-09-25T04:11:00Z",
+    0.0
+   ],
+   [
+    "2026-09-25T04:12:00Z",
+    0.0
+   ],
+   [
+    "2026-09-25T04:13:00Z",
+    0.0
+   ]
+  ],
+  "Invocations": [
+   [
+    "2026-09-25T03:48:00Z",
+    8.0
+   ],
+   [
+    "2026-09-25T03:49:00Z",
+    49.0
+   ],
+   [
+    "2026-09-25T03:50:00Z",
+    50.0
+   ],
+   [
+    "2026-09-25T03:51:00Z",
+    51.0
+   ],
+   [
+    "2026-09-25T03:52:00Z",
+    49.0
+   ],
+   [
+    "2026-09-25T03:53:00Z",
+    50.0
+   ],
+   [
+    "2026-09-25T03:54:00Z",
+    50.0
+   ],
+   [
+    "2026-09-25T03:55:00Z",
+    50.0
+   ],
+   [
+    "2026-09-25T03:56:00Z",
+    49.0
+   ],
+   [
+    "2026-09-25T03:57:00Z",
+    50.0
+   ],
+   [
+    "2026-09-25T03:58:00Z",
+    50.0
+   ],
+   [
+    "2026-09-25T03:59:00Z",
+    50.0
+   ],
+   [
+    "2026-09-25T04:00:00Z",
+    50.0
+   ],
+   [
+    "2026-09-25T04:01:00Z",
+    49.0
+   ],
+   [
+    "2026-09-25T04:02:00Z",
+    50.0
+   ],
+   [
+    "2026-09-25T04:03:00Z",
+    50.0
+   ],
+   [
+    "2026-09-25T04:04:00Z",
+    50.0
+   ],
+   [
+    "2026-09-25T04:05:00Z",
+    50.0
+   ],
+   [
+    "2026-09-25T04:06:00Z",
+    50.0
+   ],
+   [
+    "2026-09-25T04:07:00Z",
+    50.0
+   ],
+   [
+    "2026-09-25T04:08:00Z",
+    50.0
+   ],
+   [
+    "2026-09-25T04:09:00Z",
+    50.0
+   ],
+   [
+    "2026-09-25T04:10:00Z",
+    50.0
+   ],
+   [
+    "2026-09-25T04:11:00Z",
+    48.0
+   ],
+   [
+    "2026-09-25T04:12:00Z",
+    50.0
+   ],
+   [
+    "2026-09-25T04:13:00Z",
+    26.0
+   ]
+  ]
+ },
+ "pattern": {
+  "trigger": {
+   "service": "Lambda",
+   "metric": "Duration",
+   "family": "latency",
+   "comparison": "GreaterThanThreshold"
+  },
+  "services": [
+   "Lambda"
+  ],
+  "resource_types": [
+   "lambda:function"
+  ],
+  "signals": [
+   "Lambda.ConcurrentExecutions:up",
+   "Lambda.Duration:up",
+   "Lambda.Errors:up"
+  ],
+  "sequence": [
+   "change:configuration",
+   "Lambda.Duration:up",
+   "Lambda.ConcurrentExecutions:up",
+   "alarm:Lambda.Duration",
+   "Lambda.Errors:up",
+   "alarm:Lambda.Errors"
+  ],
+  "offsets_min": {
+   "change:configuration": 0.0,
+   "Lambda.Duration:up": 2.1,
+   "Lambda.ConcurrentExecutions:up": 5.1,
+   "alarm:Lambda.Duration": 7.9,
+   "Lambda.Errors:up": 11.1,
+   "alarm:Lambda.Errors": 12.4
+  },
+  "preceding_change": "configuration"
+ },
+ "summary": "Release v2.14 changed the function configuration and raised DB_POOL_SIZE from 20 to 80. Average duration rose two minutes later and concurrency followed; the latency alarm fired eight minutes after the change, and errors began about three minutes after the alarm. Rolling back the configuration returned both alarms to OK within two minutes.",
+ "captured_from": "INC-20260925-0404",
+ "archived_note": "Captured from the controlled full run on 2026-09-25 (real CloudWatch/CloudTrail data). Removed from the comparison set because it was too close to the live demo incident (same cause, 41 minutes earlier)."
+}

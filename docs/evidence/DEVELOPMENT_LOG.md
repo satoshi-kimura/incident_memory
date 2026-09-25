@@ -46,6 +46,7 @@ Evidence collected so far:
 | 04:30–04:56 | Partial controlled run (the live demo incident): configuration change 04:38:01, Duration ↑ 04:41, ConcurrentExecutions ↑ 04:43, latency alarm 04:45:48, OK 04:55:48. No errors (earlier stage than INC-0012). |
 | 04:56 | Clicked **Analyze Incident** through the public CloudFront URL: HTTP 200 in 1.2 s. **96 % similar to INC-0012**: "Last time, Lambda Errors increased 3.2 minutes after the Lambda Duration alarm." INC-0009 69 %, INC-0007 37 % (below threshold, not shown). Asynchronous Bedrock step (Nova 2 Lite) completed in about 13 s, with 0 unsupported items dropped. |
 | 04:58 | Captured screenshots of the public site (`screenshots/`). Updated the docs with the real numbers. |
+| 06:20 | **Demo redesign after review:** a 96 % match against an identical incident captured 41 minutes earlier looked staged ("the same alarm fired twice"). The product's value is recognizing a *similar pattern* with a different cause. Replaced INC-0012 with a SEEDED_DEMO incident from ten weeks earlier with a different direct cause (RDS parameter change). The unchanged algorithm now scores **80 %**. Added "Why 80% similar?" (matches and differences) to the UI, and difference details to the factor reasons (for example, "configuration change, but to a different resource"). The captured run is archived as `captured-demo-run-2026-09-25.json` and its alarm episode is hidden from the live list. The Bedrock explanation now names the differences correctly. |
 
 ## CloudTrail trace
 

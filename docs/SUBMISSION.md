@@ -36,8 +36,13 @@ When a new incident occurs, it does not only analyze what is happening now. It a
    and preceding change.
 5. **Amazon Bedrock** (Amazon Nova 2 Lite through the Converse API; the model is configurable) explains the evidence, suggests evidence-backed suspected causes, and
    explains the similarity. It never calculates the score, and every claim must cite evidence.
-6. The UI shows what happened last time: "In INC-0012, Lambda errors increased 3.2 minutes after the
-   latency alarm. The team rolled back the configuration and recovered 8 minutes after the alarm."
+6. The UI shows the closest past pattern and why it matched. For example, "80% similar to INC-0012", from ten weeks
+   earlier: a database parameter change, not a Lambda configuration change. It had the same latency alarm and
+   the same degradation sequence (change → duration ↑ → concurrency ↑ → alarm), with different resources.
+   "Last time, errors started 4 minutes after the latency alarm; reverting the change recovered the service."
+
+The value is not finding an identical failure. It is recognizing a **similar operational pattern** across
+different causes and resources, and saying precisely where the two incidents match and where they differ.
 
 ## Why it matters (Startups lane)
 
@@ -79,7 +84,9 @@ knowledge lives in one or two people's heads.
 
 - `LIVE_DEMO`: collected from AWS for a controlled demo workload. The Lambda function simulates a
   downstream database. The configuration change, Lambda metrics and alarms are real AWS events.
-- `CAPTURED_DEMO`: captured earlier from a controlled incident in the same demo environment.
+- `CAPTURED_DEMO`: captured from a controlled incident in the same demo environment. The capture pipeline was
+  proven with a real run (`evidence/captured-demo-run-2026-09-25.json`). It is not in the comparison set, because an
+  identical incident from 41 minutes earlier would not show pattern recognition.
 - `SEEDED_DEMO`: fictional historical incidents, clearly labeled, never presented as real production incidents.
 
 ## Checklist before submitting

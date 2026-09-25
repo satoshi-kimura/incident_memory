@@ -56,10 +56,10 @@ projects. **If it fails, do not apply.**
 ```
 cd backend
 TABLE_NAME=incident-memory-incidents AWS_REGION=us-east-1 \
-  ../.venv/bin/python -m scripts.seed --skip INC-0012
+  ../.venv/bin/python -m scripts.seed
 ```
 
-Omit `--skip INC-0012` in a fresh environment. With the flag, a captured INC-0012 is kept.
+`--skip <ID>` keeps an existing memory with the same ID (for example, a captured one).
 
 ## 5. Generate demo incidents
 

@@ -258,3 +258,8 @@ details summary { cursor: pointer; font-weight: 600; }
   padding: 4px 8px; border-radius: 4px; white-space: nowrap; display: none;
 }
 .skeleton { color: var(--text-3); padding: 24px 0; }
+
+.why { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.why li { display: grid; grid-template-columns: 20px 1fr; gap: 6px; align-items: start; font-size: 13px; }
+.why-icon { font-weight: 700; text-align: center; }
+.why .pts { font-family: var(--mono); font-size: 11.5px; color: var(--text-2); margin-left: 4px; }

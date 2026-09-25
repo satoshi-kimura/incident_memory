@@ -15,6 +15,7 @@ class MemoryStore:
         self.items = {}
         self.usage = {}
         self.ai = {}
+        self.hidden = []
 
     def put_ai(self, fingerprint, result):
         self.ai[fingerprint] = json.loads(json.dumps(result))
@@ -31,6 +32,9 @@ class MemoryStore:
 
     def list(self):
         return [json.loads(json.dumps(m)) for m in self.items.values()]
+
+    def hidden_episodes(self):
+        return set(self.hidden)
 
     def take_bedrock_call(self, limit):
         day = datetime.now(timezone.utc).strftime("%Y-%m-%d")
@@ -61,6 +65,11 @@ class DynamoStore:
     def get_ai(self, fingerprint):
         item = self.table.get_item(Key={"id": f"ai#{fingerprint}"}).get("Item")
         return json.loads(item["doc"]) if item else None
+
+    def hidden_episodes(self):
+        """Alarm episodes used only for demo preparation; not listed or analyzed as live incidents."""
+        item = self.table.get_item(Key={"id": "config#hidden-episodes"}).get("Item")
+        return set(json.loads(item["doc"])["episodes"]) if item else set()
 
     def get(self, incident_id):
         item = self.table.get_item(Key={"id": incident_id}).get("Item")

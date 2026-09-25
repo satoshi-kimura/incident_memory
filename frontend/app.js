@@ -291,12 +291,31 @@ function heroHTML(m, matches, a) {
   return `<section class="hero" style="margin-top:16px">
     <div class="headline">
       <span class="score">${top.score}%</span>
-      <span>similar to <a href="#/incidents/${esc(top.incident_id)}"><b>${esc(top.incident_id)}</b></a> — ${esc(top.title)}</span>
+      <span>similar to <a href="#/incidents/${esc(top.incident_id)}"><b>${esc(top.incident_id)}</b></a> — ${esc(top.title)}
+        <span class="faint small">· ${esc(fmtDateTime(top.started_at))}</span></span>
+    </div>
+    <div>
+      <h3 style="margin-bottom:6px">Why ${top.score}% similar?</h3>
+      ${whyList(top.breakdown)}
     </div>
     ${nextText ? `<div class="next">Last time: in ${esc(top.incident_id)}, ${nextText}.</div>` : ""}
-    ${top.resolution ? `<div class="muted">Previously resolved by: ${esc(top.resolution.action)} (recovered in ${top.resolution.time_to_recovery_min} min)</div>` : ""}
+    ${top.resolution ? `<div class="muted">Previously resolved by: ${esc(top.resolution.action)} (recovered ${top.resolution.time_to_recovery_min} min after the alarm)</div>` : ""}
     <div class="small faint">Historical comparison, not a prediction. The score is calculated from five documented factors, not by AI.</div>
   </section>`;
+}
+
+function whyList(breakdown) {
+  const icon = (b) => b.omitted ? ["—", "excluded", "var(--text-3)"]
+    : b.value >= 0.999 ? ["✓", "match", "var(--good)"]
+    : b.value > 0 ? ["◐", "partial match", "var(--warning)"]
+    : ["✗", "no match", "var(--critical)"];
+  const order = [...breakdown].sort((a, b) => (b.value ?? -1) - (a.value ?? -1));
+  return `<ul class="why">${order.map((b) => {
+    const [sym, label, color] = icon(b);
+    return `<li><span class="why-icon" style="color:${color}" title="${label}" aria-label="${label}">${sym}</span>
+      <span><b>${esc(b.label)}</b> <span class="pts">${b.omitted ? "excluded" : `${b.points}/${b.weight}`}</span><br>
+      <span class="muted small">${esc(b.reason)}</span></span></li>`;
+  }).join("")}</ul>`;
 }
 
 function pickExplanation(m) {
@@ -399,13 +418,17 @@ function compareChartPanel(m, top) {
       <span><i class="dot" style="background:var(--series-1)"></i>This incident (${esc(m.id)})</span>
       <span><i class="dot" style="background:var(--series-2)"></i>${esc(top.incident_id)}</span>
       <span><i class="dot" style="border:2px solid var(--series-2);background:transparent"></i>Happened next in ${esc(top.incident_id)}</span>
+      <span><i class="dot" style="background:var(--text-3)"></i>Only in ${esc(top.incident_id)}</span>
     </div>
   </section>`;
 }
 
 function compareChart(cur, top) {
   const curEvents = Object.entries(cur.offsets_min || {}).map(([t, x]) => ({ t, x }));
-  const histEvents = Object.entries(top.pattern?.offsets_min || {}).map(([t, x]) => ({ t, x, next: !(t in (cur.offsets_min || {})) }));
+  const nextTokens = new Set((top.next_events || []).map((e) => e.token));
+  const histEvents = Object.entries(top.pattern?.offsets_min || {}).map(([t, x]) => ({
+    t, x, next: nextTokens.has(t), onlyHist: !(t in (cur.offsets_min || {})) && !nextTokens.has(t),
+  }));
   const all = [...curEvents, ...histEvents].map((e) => e.x);
   if (!all.length) return `<p class="muted">Not enough timed events to compare.</p>`;
   const maxX = Math.max(5, Math.ceil(Math.max(...all) / 5) * 5);
@@ -413,18 +436,20 @@ function compareChart(cur, top) {
   const sx = (x) => left + (x / maxX) * (W - left - right);
   const lane = (y, events, color, label) => {
     const sorted = [...events].sort((a, b) => a.x - b.x);
-    let lastX = -Infinity, flip = false;
+    const rightEdge = { top: -Infinity, bottom: -Infinity };  // label collision avoidance per row
     return `<text x="0" y="${y + 4}" font-size="12" fill="var(--text-2)">${esc(label)}</text>
       <line x1="${left}" x2="${W - right}" y1="${y}" y2="${y}" stroke="var(--border)"/>
       ${sorted.map((e) => {
         const x = sx(e.x);
-        flip = x - lastX < 90 ? !flip : false;
-        lastX = x;
-        const ty = flip ? y + 26 : y - 12;
         const name = shortToken(e.t);
-        return `<g class="cmp-pt" data-tip="${esc(`${name} · +${e.x} min`)}">
+        const half = name.length * 3.3;  // approx. half label width at 11px
+        const side = x - half > rightEdge.top + 6 ? "top" : x - half > rightEdge.bottom + 6 ? "bottom" : "top";
+        rightEdge[side] = x + half;
+        const ty = side === "top" ? y - 12 : y + 26;
+        const note = e.next ? " · happened next last time" : e.onlyHist ? ` · only in ${top.incident_id}` : "";
+        return `<g class="cmp-pt" data-tip="${esc(`${name} · +${e.x} min${note}`)}">
           <circle cx="${x}" cy="${y}" r="10" fill="transparent"/>
-          <circle cx="${x}" cy="${y}" r="5" fill="${e.next ? "var(--surface)" : color}" stroke="${e.next ? color : "var(--surface)"}" stroke-width="2"/>
+          <circle cx="${x}" cy="${y}" r="5" fill="${e.next ? "var(--surface)" : e.onlyHist ? "var(--text-3)" : color}" stroke="${e.next ? color : "var(--surface)"}" stroke-width="2"/>
           <text x="${x}" y="${ty}" font-size="11" text-anchor="middle" fill="var(--text-2)">${esc(name)}</text>
         </g>`;
       }).join("")}`;

@@ -31,8 +31,13 @@ When a new AWS incident occurs, it:
 It does not only analyze what is happening now. It asks:
 **Have we seen this pattern before, and what happened last time?**
 
-> **96% similar to INC-0012.** Last time, Lambda errors increased 3.2 minutes after the latency alarm.
-> The team rolled back the configuration change and recovered 8 minutes after the alarm.
+> **80% similar to INC-0012** (ten weeks earlier). The direct cause was different (a database parameter
+> change instead of a Lambda configuration change), but the degradation followed the same sequence:
+> change → duration ↑ → concurrency ↑ → latency alarm. **Last time, errors started 4 minutes after the
+> latency alarm.** The team reverted the change and recovered 14 minutes after the alarm.
+
+The point is not to find an identical failure. It is to recognize a **similar operational pattern**
+across different resources and causes, and to explain exactly why it matched and where it differs.
 
 ## What makes it different
 
@@ -52,7 +57,7 @@ It does not only analyze what is happening now. It asks:
 2. Under **Current incidents**, open the live demo incident (source `LIVE DEMO`).
 3. Click **Analyze Incident**.
 4. Read the result:
-   - **the match**: "N% similar to INC-0012", with what happened next last time
+   - **the match**: "80% similar to INC-0012", **Why 80% similar?** (what matches, what differs), and what happened next last time
    - **Timeline**: CloudTrail change, then Duration increase, then concurrency increase, then alarm
    - **Suspected Causes** with confidence and evidence
    - **Similar Incidents** with the per-factor score breakdown

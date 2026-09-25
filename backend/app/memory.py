@@ -176,7 +176,22 @@ def build_pattern(memory):
         "sequence": sequence,
         "offsets_min": offsets,
         "preceding_change": pre["change_category"] if pre else "none",
+        # Informational only (explains differences; not part of the score)
+        "preceding_change_resource": pre.get("resource_type") if pre else None,
     }
+
+
+RESOURCE_TYPE_NAMES = {
+    "lambda:function": "Lambda function",
+    "rds:db": "RDS database",
+    "rds:db-parameter-group": "RDS parameter group",
+    "dynamodb:table": "DynamoDB table",
+    "ssm:parameter": "SSM parameter",
+}
+
+
+def describe_resource_type(rtype):
+    return RESOURCE_TYPE_NAMES.get(rtype, rtype)
 
 
 def describe_token(token):

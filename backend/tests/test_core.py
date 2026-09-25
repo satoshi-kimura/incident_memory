@@ -40,7 +40,8 @@ class SimilarityTest(unittest.TestCase):
     def test_strong_match_is_inc_0012(self):
         res = find_similar(current_memory(), sample_memories())
         self.assertEqual(res["matches"][0]["incident_id"], "INC-0012")
-        self.assertGreaterEqual(res["matches"][0]["score"], 80)
+        # Similar pattern, different direct cause and resources: a strong but not identical match
+        self.assertTrue(75 <= res["matches"][0]["score"] <= 90, res["matches"][0]["score"])
         for r in res["matches"]:
             self.assertGreaterEqual(r["score"], MATCH_THRESHOLD)
 
@@ -48,7 +49,13 @@ class SimilarityTest(unittest.TestCase):
         top = find_similar(current_memory(), sample_memories())["matches"][0]
         nxt = {e["token"]: e for e in top["next_events"]}
         self.assertIn("Lambda.Errors:up", nxt)
-        self.assertEqual(nxt["Lambda.Errors:up"]["minutes_after_state"], 8)
+        self.assertEqual(nxt["Lambda.Errors:up"]["minutes_after_state"], 4)
+
+    def test_reasons_name_differences(self):
+        top = find_similar(current_memory(), sample_memories())["matches"][0]
+        reasons = {b["factor"]: b["reason"] for b in top["breakdown"]}
+        self.assertIn("RDS parameter group", reasons["change"])
+        self.assertIn("only in the historical incident", reasons["resources"])
 
     def test_score_is_deterministic(self):
         cur, hist = current_memory()["pattern"], sample_memories()[0]["pattern"]
