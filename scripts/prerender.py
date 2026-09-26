@@ -71,12 +71,12 @@ def render(api):
     recurrence_row = next((r for r in real_world if r.get("best_match")), None)
     e = escape
     parts = ['''<section class="intro">
-      <h1>Have we seen this before?</h1>
-      <p>A new AWS incident occurs. Incident Memory reconstructs what happened, recognizes a similar historical failure
-      pattern, and shows what worked last time.</p>
-      <p class="differentiator"><b>Monitoring helps you understand what is happening now. Incident Memory remembers what
-      worked last time:</b> incidents are kept as long-term structured memories, and the previous cause, action and
-      recovery are reused when a similar pattern returns.</p>
+      <h1>When AWS fails, remember what worked last time.</h1>
+      <p>Incident Memory reconstructs an alarm from CloudWatch and CloudTrail, compares it with past failures, and
+      surfaces the previous cause, action, and recovery time.</p>
+      <p class="differentiator"><b>In this demo, real AWS evidence matches a different-cause incident at 82%:</b>
+      both follow configuration change → errors → latency → concurrency → alarm. The previous rollback recovered
+      the service in 14 minutes.</p>
     </section>''']
 
     if featured_row:

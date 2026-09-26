@@ -7,18 +7,21 @@ consistent with the product story.
 - **Tagline:** Your infrastructure remembers what happened last time.
 - **Live app:** https://d2zs12dmk7373h.cloudfront.net
 - **Category tag:** `#commercial-potential`
-- **Lane tag:** `#startups`
+- **Lane tag:** `#startup`
 
 ---
 
 ## Story
 
-> A new AWS incident occurs. Incident Memory reconstructs what happened, recognizes a similar historical failure pattern, and shows what worked last time.
+> Incident Memory turns an AWS alarm into an answer: what changed, which past failure matches, and what worked last time.
 
-Monitoring tools tell engineers that something is wrong.
+In the featured demo, real CloudWatch and CloudTrail evidence reconstructs a Lambda incident and matches it at
+**82%** to a past incident with a different cause. Incident Memory then surfaces the previous rollback and
+**14-minute recovery**—the operational memory an on-call engineer needs before repeating the investigation.
 
-Engineers then spend time reconstructing what changed, what happened previously, and
-whether the team has already solved the same problem.
+Monitoring tools tell engineers that something is wrong. The expensive part comes next: reconstructing what changed,
+finding out whether the team has seen the pattern before, and recovering the resolution buried in someone's head,
+a chat thread, or an old postmortem.
 
 **Incident Memory converts operational events into reusable organizational memory.**
 
@@ -61,7 +64,7 @@ last time and how long recovery took**.
 
 > Monitoring helps you understand what is happening now. Incident Memory remembers what worked last time.
 
-## Why it matters (Startups lane)
+## Why it matters (Startup lane)
 
 Every on-call team repeats investigations it has already done. Postmortems are written
 once and rarely consulted during the next incident. Incident Memory makes past incidents
@@ -143,5 +146,5 @@ leaking into a timeline, over-confident AI wording). The builder decided when th
 - [x] Screenshots of the agent calling aws-mcp (evidence/screenshots/05-agent-calling-aws-mcp.png) and the `/mcp` panel (07-claude-code-mcp-aws-connected.png)
 - [x] Screenshots captured (docs/evidence/screenshots): attach them to the Builder Center page
 - [x] Architecture diagram ready (docs/architecture.png): attach it to the Builder Center page
-- [ ] Tags: `#commercial-potential`, `#startups`
+- [ ] Tags: `#commercial-potential`, `#startup`
 - [ ] Development process and coding-agent usage described
