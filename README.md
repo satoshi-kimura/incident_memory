@@ -19,9 +19,9 @@ thread, or a postmortem nobody can find at 2 a.m.
 
 ### Who built it
 
-Incident Memory is built by **ENOXA**, the team behind **[Gatepath](https://gatepath.jp)**, a permission-aware
-enterprise knowledge search across Slack, Google Drive, Microsoft 365, Confluence, Jira, GitHub and more.
-Running Gatepath on AWS, we kept re-investigating the same alarm patterns, and that is why we built Incident Memory.
+Incident Memory is built by **Satoshi Kimura**, founder of **ENOXA**, the company behind **[Gatepath](https://gatepath.jp)**,
+a permission-aware enterprise knowledge search across Slack, Google Drive, Microsoft 365, Confluence, Jira, GitHub and more.
+Running Gatepath on AWS, I kept re-investigating the same alarm patterns, and that is why I built Incident Memory.
 Incident Memory is a standalone product: it does not connect to Gatepath or read any Gatepath data.
 
 ## The solution

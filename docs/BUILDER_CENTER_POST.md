@@ -24,7 +24,7 @@ Monitoring tells you that something is wrong. Then the real work starts: an on-c
 changed, scrolls through dashboards, and asks the team channel "have we seen this before?". Often the team *has*
 seen it before. The answer is in someone's head, an old chat thread, or a postmortem nobody can find at 2 a.m.
 
-We run a SaaS product on AWS, and we kept re-investigating the same alarm patterns. So we built the tool we wanted.
+I run a SaaS product on AWS, and I kept re-investigating the same alarm patterns. So I built the tool I wanted.
 
 ### What Incident Memory does
 
@@ -97,24 +97,24 @@ last time and how long recovery took**.
 
 ### How the coding agent helped us ship
 
-We built Incident Memory with **Claude Code**, connected to our AWS account through the **Agent Toolkit for AWS**
+I built Incident Memory with **Claude Code**, connected to my AWS account through the **Agent Toolkit for AWS**
 (AWS MCP Server and AWS skills), using a dedicated IAM user limited to the project's resources.
 
-**We decided, the agent executed.**
+**I decided, the agent executed.**
 
-- **We** wrote the specification: the Incident Memory model, the five similarity factors and a 60 % threshold.
+- **I** wrote the specification: the Incident Memory model, the five similarity factors and a 60 % threshold.
   **The agent** built the data model, collectors, similarity engine, API, UI and 28 tests.
-- **We** set the safety boundary: an AWS account that also runs production, so everything had to be isolated.
+- **I** set the safety boundary: an AWS account that also runs production, so everything had to be isolated.
   **The agent** wrote Terraform for about 40 resources and a *plan gate* that refuses any change outside the
   project. The gate once stopped an apply on a false alarm, which is what it should do when unsure.
-- **We** reviewed the first demo and said a 96 % match against a near-identical incident "looks staged".
+- **I** reviewed the first demo and said a 96 % match against a near-identical incident "looks staged".
   **The agent** reworked the demo into a different-cause, similar-pattern story, and the unchanged algorithm scored it 82 %.
-- **We** asked for data consistency: Started always means the alarm time, evidence IDs follow time order, and
+- **I** asked for data consistency: Started always means the alarm time, evidence IDs follow time order, and
   alarms agree with thresholds. **The agent** fixed each rule and added automated tests.
 - **The agent** ran controlled incidents in AWS, verified every result on the public URL, and found and fixed its
   own bugs along the way. For example, a demo run fired an alarm it should not have, so it found the cause, fixed
   it, and ran the incident again.
-- Every `terraform apply` went through the plan gate. For the later changes, **we** read the plan summary and
+- Every `terraform apply` went through the plan gate. For the later changes, **I** read the plan summary and
   approved each apply.
 
 Proof of the AWS connection: the `/mcp` panel showing the AWS MCP Server connected, the agent calling
@@ -129,8 +129,8 @@ Proof of the AWS connection: the `/mcp` panel showing the AWS MCP Server connect
 Every on-call team repeats investigations it has already done. Incident Memory makes past incidents queryable at
 the moment they matter: structured, comparable and backed by evidence.
 
-**Who is building it:** ENOXA, the team behind [Gatepath](https://gatepath.jp), a permission-aware enterprise
-knowledge search across Slack, Google Drive, Microsoft 365, Confluence, Jira, GitHub and more. Incident Memory is a
+**Who is building it:** Satoshi Kimura, founder of ENOXA, the company behind [Gatepath](https://gatepath.jp), a
+permission-aware enterprise knowledge search across Slack, Google Drive, Microsoft 365, Confluence, Jira, GitHub and more. Incident Memory is a
 standalone product; it does not connect to Gatepath or read any Gatepath data.
 
 **Where it is headed**
