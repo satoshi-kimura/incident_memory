@@ -46,6 +46,20 @@ It does not only analyze what is happening now. It asks:
 The point is not to find an identical failure. It is to recognize a **similar operational pattern**
 across different resources and causes, and to explain exactly why it matched and where it differs.
 
+### How is this different from CloudWatch investigations?
+
+Amazon CloudWatch investigations helps you investigate what is happening now: it correlates metrics, logs,
+deployments and CloudTrail changes and suggests hypotheses. Its data is kept for 7 to 90 days, and AWS recommends
+copying important incident reports elsewhere to keep them longer
+([CloudWatch investigations data retention](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/Investigations-Retention.html)).
+
+Incident Memory is that "elsewhere", and more: **long-term operational memory**. Every incident is kept as a
+structured memory (trigger, timeline, signals, changes, cause, resolution, pattern). When a similar pattern returns,
+even with a different cause, Incident Memory shows why it matches, what is different, and **what the team did
+last time and how long recovery took**.
+
+> Cloud monitoring helps you investigate what is happening now. Incident Memory remembers what your team learned last time.
+
 ## What makes it different
 
 - **Memory, not a log summarizer.** Incidents are stored as structured data (trigger, timeline,

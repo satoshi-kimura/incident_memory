@@ -56,6 +56,10 @@ Analyze Incident (INC-20260925-0335)
   │                   fingerprint = SHA-256(evidence + matches + model + prompt version)
   │                   cached result → reuse; otherwise one Bedrock call within the daily cap
   └─ 8. Store         DynamoDB; UI polls until the AI step completes
+
+Once an incident has recovered and its full window has been collected, the evidence is final. Re-analysis then
+reuses the stored evidence and only repeats the comparison, because 1-minute Lambda metrics expire after 15 days
+and re-collecting would lose data. The memory stays intact indefinitely.
 ```
 
 The Bedrock step runs as an asynchronous self-invocation of the same Lambda
@@ -137,7 +141,8 @@ Other controls:
 - Input validation uses a strict incident ID regex. Unknown routes return 404.
 - Errors return generic English messages. Details go to CloudWatch Logs only.
 - Controlled incidents are generated only by the separate scenario function. It is not
-  reachable from the public API and runs manually or on the weekly schedule.
+  reachable from the public API. It runs manually; the optional weekly schedule is disabled during judging
+  (`weekly_scenario_enabled = false`), so the verified demo stays fixed.
 
 ## Cost controls
 
@@ -152,8 +157,7 @@ Other controls:
 | No NAT, VPC, OpenSearch, RDS | No fixed hourly charges |
 
 Expected idle cost is effectively zero, apart from pennies of S3/DynamoDB storage and
-CloudWatch alarms (3 standard alarms, about $0.30/month). The weekly demo scenario runs
-about 30 Lambda minutes of low-memory functions.
+CloudWatch alarms (3 standard alarms, about $0.30/month). The optional weekly demo scenario (disabled during judging) runs about 30 Lambda minutes per week of low-memory functions.
 
 **Lambda concurrency.** This account's regional concurrency quota is 10, and AWS
 requires at least 10 unreserved, so reserved concurrency cannot be set. Throttling

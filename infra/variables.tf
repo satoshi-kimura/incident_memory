@@ -21,7 +21,7 @@ variable "bedrock_daily_call_limit" {
 }
 
 variable "weekly_scenario_enabled" {
-  description = "Run the partial demo scenario every Monday 03:00 UTC"
+  description = "Run the partial demo scenario every Monday 03:00 UTC (off during judging to keep the verified demo fixed)"
   type        = bool
-  default     = true
+  default     = false
 }

@@ -104,14 +104,17 @@ async function renderDashboard() {
       <h1>Have we seen this before?</h1>
       <p>Monitoring tells you something is wrong. Incident Memory reconstructs each AWS incident from CloudWatch and
       CloudTrail evidence, stores it as a structured memory, and compares new incidents with what happened last time.</p>
+      <p class="differentiator"><b>Cloud monitoring helps you investigate what is happening now. Incident Memory remembers
+      what your team learned last time:</b> incidents are kept as long-term structured memories, and the previous
+      cause, action and recovery are reused when a similar pattern returns.</p>
     </section>
     ${(data.warnings || []).map((w) => `<div class="notice warn" style="margin-bottom:12px">${esc(w)}</div>`).join("")}
     <section class="panel">
       <div class="section-head">
-        <h2>Current incidents</h2>
-        <span class="small muted">Alarms from the demo workload in the last 14 days</span>
+        <h2>Recent analyzed incidents</h2>
+        <span class="small muted">Recent AWS demo incidents · real CloudWatch and CloudTrail evidence</span>
       </div>
-      ${live.length ? incidentTable(live) : `<p class="muted">No live demo incident in the last 14 days. Historical memories are listed below.</p>`}
+      ${live.length ? incidentTable(live) : `<p class="muted">No recent demo incident. Historical memories are listed below.</p>`}
     </section>
     <section class="panel">
       <div class="section-head">
@@ -208,9 +211,11 @@ function analyzeBar(m) {
   return `<section class="panel analyze-bar">
     <div>
       <h2>${a ? "Analysis" : "This incident has not been analyzed yet"}</h2>
-      <div class="small muted">Collects CloudWatch alarms and metrics and CloudTrail changes from ${a ? esc(fmtTime(a.window.start)) + "–" + esc(fmtTime(a.window.end)) + " UTC" : "30 minutes before to 15 minutes after the alarm"}, then compares the pattern with ${a ? a.compared_count : "all"} resolved incidents.</div>
+      <div class="small muted">${a && a.evidence_final
+        ? `Evidence was collected from CloudWatch and CloudTrail on ${esc(fmtDateTime(a.collected_at))} (window ${esc(fmtTime(a.window.start))}–${esc(fmtTime(a.window.end))} UTC) and is kept as a memory. Re-running compares it again with ${a.compared_count} resolved incidents.`
+        : `Collects CloudWatch alarms and metrics and CloudTrail changes from ${a ? esc(fmtTime(a.window.start)) + "–" + esc(fmtTime(a.window.end)) + " UTC" : "30 minutes before to 15 minutes after the alarm"}, then compares the pattern with ${a ? a.compared_count : "all"} resolved incidents.`}</div>
     </div>
-    <button class="btn ${a ? "" : "primary"}" id="analyze-btn">${a ? "Re-run analysis" : "Analyze Incident"}</button>
+    <button class="btn ${a ? "" : "primary"}" id="analyze-btn">${a ? (a.evidence_final ? "Re-run comparison" : "Re-run analysis") : "Analyze Incident"}</button>
   </section>`;
 }
 

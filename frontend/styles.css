@@ -269,3 +269,5 @@ details summary { cursor: pointer; font-weight: 600; }
 .last-time { border: 1px solid var(--border); border-radius: var(--radius); padding: 12px 14px; background: var(--surface-2); display: grid; gap: 10px; align-content: start; }
 .last-time h3 { margin: 0; }
 .last-time .next { font-size: 14px; }
+
+.intro .differentiator { color: var(--text); border-left: 3px solid var(--accent); padding-left: 10px; }

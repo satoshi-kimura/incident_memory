@@ -114,10 +114,17 @@ def analyze(incident_id):
     trigger_alarm = episode["trigger_alarm"] if episode else existing["trigger"]["alarm_name"]
 
     start = trigger_ts - timedelta(minutes=config.WINDOW_BEFORE_MIN)
-    end = min(trigger_ts + timedelta(minutes=config.WINDOW_AFTER_MIN), datetime.now(timezone.utc))
-    memory = collect_and_build(incident_id, trigger_ts, trigger_alarm, start, end)
-    if existing:
-        memory["created_at"] = existing.get("created_at", memory["created_at"])
+    window_end = trigger_ts + timedelta(minutes=config.WINDOW_AFTER_MIN)
+    if existing and evidence_is_final(existing, window_end):
+        # The incident recovered and its whole window was collected. Re-collecting can only lose data
+        # (1-minute metrics expire after 15 days), so re-analysis compares the stored evidence again.
+        memory = existing
+        memory["analysis"]["evidence_final"] = True
+        memory["analysis"]["analyzed_at"] = now_iso()
+    else:
+        memory = collect_and_build(incident_id, trigger_ts, trigger_alarm, start, min(window_end, datetime.now(timezone.utc)))
+        if existing:
+            memory["created_at"] = existing.get("created_at", memory["created_at"])
 
     history = [m for m in store.list() if m["id"] != incident_id]
     sources = memory["analysis"]["sources"]
@@ -164,6 +171,12 @@ def analyze(incident_id):
         sources=sources, matches=[(m["incident_id"], m["score"]) for m in similar["matches"]], ai_status=memory["analysis"]["ai_status"])
     metric("AnalysisDurationMs", memory["analysis"]["duration_ms"], unit="Milliseconds")
     return memory, requested is not None
+
+
+def evidence_is_final(memory, window_end):
+    """True when the incident recovered and its full analysis window was collected."""
+    collected = memory.get("analysis", {}).get("collected_at")
+    return bool(memory.get("ended_at") and collected and parse_ts(collected) >= window_end)
 
 
 def run_ai(incident_id, fp):

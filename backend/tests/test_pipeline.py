@@ -68,6 +68,30 @@ class PipelineTest(unittest.TestCase):
             config.BEDROCK_CLIENT = "disabled"
             config.COLLECTION_CACHE_SECONDS = 60
 
+    def test_reanalysis_after_recovery_reuses_stored_evidence(self):
+        """After the window is complete, re-analysis must not re-collect (metrics expire after 15 days)."""
+        from app import analysis as an, collectors
+        eid = [m for m in an.list_incidents()[0] if m["source_type"] == "LIVE_DEMO"][0]["id"]
+        first, _ = an.analyze(eid)
+        self.assertTrue(first["signals"])
+        config.COLLECTION_CACHE_SECONDS = 0
+        calls = []
+        saved = collectors.collect_metrics, collectors.collect_changes, collectors.alarm_transitions
+        def fail(*a, **k):
+            calls.append(1)
+            raise collectors.CollectorError("CloudWatch", "expired")
+        collectors.collect_metrics = collectors.collect_changes = collectors.alarm_transitions = fail
+        try:
+            again, _ = an.analyze(eid)
+        finally:
+            collectors.collect_metrics, collectors.collect_changes, collectors.alarm_transitions = saved
+            config.COLLECTION_CACHE_SECONDS = 60
+        self.assertEqual(calls, [])
+        self.assertTrue(again["analysis"]["evidence_final"])
+        self.assertEqual(again["signals"], first["signals"])
+        self.assertEqual([(s["incident_id"], s["score"]) for s in again["analysis"]["similar"]],
+                         [(s["incident_id"], s["score"]) for s in first["analysis"]["similar"]])
+
     def test_rejects_invalid_ids(self):
         for bad in ["../etc", "arn:aws:lambda:us-east-1:1:function:x", "INC-1", "INC-0012;drop"]:
             status, _ = self.call("GET", f"/api/incidents/{bad}")

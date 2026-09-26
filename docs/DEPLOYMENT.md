@@ -114,6 +114,16 @@ terraform plan -out=tfplan \
 
 The evidence fingerprint includes the model ID, so new analyses are generated with the new model.
 
+## Prerender the landing page
+
+The landing page contains a static, JavaScript-free version of the featured analysis, so crawlers and AI scoring
+systems can read it. After the live incident is analyzed, refresh it from the public API and deploy:
+
+```
+python3 scripts/prerender.py
+./scripts/build.sh
+```
+
 ## Update the frontend or backend
 
 Re-run `./scripts/build.sh`, then plan, inspect and apply. Terraform uploads changed files to
