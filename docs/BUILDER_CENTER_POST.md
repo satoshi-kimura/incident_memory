@@ -1,6 +1,7 @@
 # Builder Center post: Incident Memory
 
-Copy the sections below into the AWS Builder Center project page.
+**Builder Center limits the post body to fewer than 3,000 characters. Paste [BUILDER_CENTER_BODY.md](BUILDER_CENTER_BODY.md)
+(about 2,600 characters) into the body field.** The longer version below is kept as reference material.
 
 - **Title:** Incident Memory: your infrastructure remembers what happened last time
 - **Tags:** `#commercial-potential` `#startups`
