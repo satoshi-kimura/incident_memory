@@ -229,6 +229,35 @@ def _fmt(value, unit):
     return f"{value:,.0f}"
 
 
+def exact_recurrence(cur_m, hist_m, score):
+    """Reasons why two incidents are the same failure recurring, or None.
+
+    Defined conditions, not just a 100 % score: same alarm type (service, metric, comparison), same threshold,
+    same signals in the same order, and the same recovery behaviour (both returned to OK with no recorded action).
+    """
+    ct, ht = cur_m.get("trigger") or {}, hist_m.get("trigger") or {}
+    cp, hp = cur_m["pattern"], hist_m["pattern"]
+    same_alarm = all(ct.get(k) and ct.get(k) == ht.get(k) for k in ("service", "metric", "comparison"))
+    same_threshold = ct.get("threshold") is not None and ct.get("threshold") == ht.get("threshold")
+    same_signals = bool(cp["signals"]) and cp["signals"] == hp["signals"] and cp["sequence"] == hp["sequence"]
+    auto_recovery = all(m.get("ended_at") and not m.get("resolution") for m in (cur_m, hist_m))
+    if not (score >= 100 and same_alarm and same_threshold and same_signals and auto_recovery):
+        return None
+    direction = "below" if "Less" in (ct.get("comparison") or "") else "above"
+    return [
+        f"Same alarm type: {ct['service']} {ct['metric']} ({ct['comparison']})",
+        f"Same metric: {ct['metric']}",
+        f"Same threshold behavior: {direction} {_fmt(ct['threshold'], ct.get('unit'))}",
+        "Same ALARM → OK recovery pattern: returned to OK with no recorded action",
+    ]
+
+
+def _gap_min(cur_m, hist_m):
+    if not (cur_m.get("started_at") and hist_m.get("started_at")):
+        return None
+    return round((parse_ts(cur_m["started_at"]) - parse_ts(hist_m["started_at"])).total_seconds() / 60)
+
+
 def find_similar(current_memory, candidates, sources=None):
     """Rank earlier memories with a known outcome; only matches >= MATCH_THRESHOLD are returned."""
     cur = current_memory["pattern"]
@@ -241,7 +270,11 @@ def find_similar(current_memory, candidates, sources=None):
         if started and m.get("started_at") and m["started_at"] >= started:
             continue  # only incidents that happened before this one can be "last time"
         score, breakdown = compare(cur, m["pattern"], omitted)
+        exact = exact_recurrence(current_memory, m, score)
         results.append({
+            "match_type": "exact_recurrence" if exact else "pattern_similarity",
+            "exact_reasons": exact or [],
+            "minutes_earlier": _gap_min(current_memory, m),
             "incident_id": m["id"],
             "title": m.get("title"),
             "source_type": m.get("source_type"),

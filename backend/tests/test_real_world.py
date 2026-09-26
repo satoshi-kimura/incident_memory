@@ -74,6 +74,52 @@ class RealWorldImportTest(unittest.TestCase):
         self.assertEqual(find_similar(first, [second], first["analysis"]["sources"])["matches"], [])  # later never counts
 
 
+class RecurrenceVsPatternTest(unittest.TestCase):
+    def setUp(self):
+        self.first, self.second = build_all(HISTORY, POINTS, collected_at="2026-09-26T09:00:00Z")
+
+    def test_exact_recurrence_keeps_score_100(self):
+        top = find_similar(self.second, [self.first], self.second["analysis"]["sources"])["matches"][0]
+        self.assertEqual(top["score"], 100)
+        self.assertEqual(top["match_type"], "exact_recurrence")
+        self.assertEqual(len(top["exact_reasons"]), 4)
+        self.assertTrue(any("Same threshold behavior" in r for r in top["exact_reasons"]))
+
+    def test_previous_occurrence_gap_comes_from_timestamps(self):
+        top = find_similar(self.second, [self.first], self.second["analysis"]["sources"])["matches"][0]
+        expected = round((parse_ts(self.second["started_at"]) - parse_ts(self.first["started_at"])).total_seconds() / 60)
+        self.assertEqual(top["minutes_earlier"], expected)
+        self.assertEqual(top["minutes_earlier"], 240)
+
+    def test_a_100_score_alone_is_not_exact_recurrence(self):
+        import copy
+        other = copy.deepcopy(self.first)
+        other["trigger"]["threshold"] = 200e6                       # different threshold, same pattern shape
+        top = find_similar(self.second, [other], self.second["analysis"]["sources"])["matches"][0]
+        self.assertEqual(top["score"], 100)
+        self.assertEqual(top["match_type"], "pattern_similarity")
+        self.assertEqual(top["exact_reasons"], [])
+
+    def test_demo_pattern_similarity_stays_a_percentage(self):
+        import sys
+        sys.path.insert(0, "tests")
+        from test_core import current_memory
+        from app.seed_data import sample_memories
+        top = find_similar(current_memory(), sample_memories())["matches"][0]
+        self.assertEqual(top["match_type"], "pattern_similarity")
+        self.assertTrue(75 <= top["score"] <= 90)
+
+    def test_ai_cannot_invent_a_cause_for_real_world_data(self):
+        from app import ai
+        out = ai.validate({"summary": "s", "insufficient_evidence": False, "insufficient_evidence_reason": "",
+                           "suspected_causes": [{"description": "A deployment changed the connection pool",
+                                                 "supporting_evidence": ["CT-001"], "confidence": "HIGH",
+                                                 "reasoning": "guess"}],
+                           "similarity_explanations": []}, self.second, [])
+        self.assertEqual(out["suspected_causes"], [])               # CT-001 does not exist: no change history
+        self.assertTrue(out["insufficient_evidence"])
+
+
 class RealWorldReanalysisTest(unittest.TestCase):
     def test_reanalysis_keeps_the_real_world_label(self):
         from app import analysis, config, store

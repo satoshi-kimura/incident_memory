@@ -127,12 +127,15 @@ async function renderDashboard() {
         <h2>Captured real-world recurrences</h2>
         <span class="small muted">Exact recurrence in real production data · sanitized</span>
       </div>
-      <p class="small muted" style="margin:0 0 10px">The same production database free-memory alarm went through
-      ${realWorld.length} ALARM → OK cycles between ${esc(realWorld[realWorld.length - 1].started_at.slice(0, 10))} and
-      ${esc((realWorld[0].ended_at || realWorld[0].started_at).slice(0, 10))}. Each cycle is its own memory and is compared with the cycles before it.
+      <p style="margin:0 0 4px"><b>The same production alarm recurred ${realWorld.length} times in ${recurrenceDays(realWorld)} days.</b>
+      Real production data shows one operational failure (database free memory below its alarm threshold) returning again and again.</p>
+      <p class="small muted" style="margin:0 0 10px">The alarm went through ${realWorld.length} ALARM → OK cycles between
+      ${esc(realWorld[realWorld.length - 1].started_at.slice(0, 10))} and ${esc((realWorld[0].ended_at || realWorld[0].started_at).slice(0, 10))}.
+      Each occurrence is stored as a separate Incident Memory and compared with previous occurrences.
+      Repeated incidents should become reusable operational memory, not repeated investigation work.
       Demo incidents above show <b>pattern similarity across different causes</b>; these show <b>exact recurrence</b>.</p>
-      ${incidentTable(realWorld.slice(0, 5))}
-      ${realWorld.length > 5 ? `<details><summary class="small">Show all ${realWorld.length} cycles</summary>${incidentTable(realWorld.slice(5))}</details>` : ""}
+      ${incidentTable(realWorld.slice(0, 5), true)}
+      ${realWorld.length > 5 ? `<details><summary class="small">Show all ${realWorld.length} cycles</summary>${incidentTable(realWorld.slice(5), true)}</details>` : ""}
     </section>` : ""}
     <section class="panel">
       <div class="section-head">
@@ -151,18 +154,49 @@ async function renderDashboard() {
     }));
 }
 
-function incidentTable(rows) {
+const isExact = (match) => match && match.match_type === "exact_recurrence";
+
+function fmtGap(minutes) {
+  if (minutes == null) return "";
+  const d = Math.floor(minutes / 1440), h = Math.floor((minutes % 1440) / 60), m = minutes % 60;
+  return [d ? `${d}d` : "", h ? `${h}h` : "", !d && m ? `${m}m` : ""].filter(Boolean).join(" ") + " earlier";
+}
+
+function matchCell(r) {
+  const b = r.best_match;
+  if (!b) return `<span class="faint">${r.analyzed_at ? "No match ≥ 60%" : isUnderAnalysis(r) ? "Not analyzed" : "—"}</span>`;
+  if (isExact(b)) {
+    return `<b class="exact-label">EXACT RECURRENCE</b> <span class="muted">· ${esc(b.id)}</span>
+      <div class="small muted">${esc(fmtGap(b.minutes_earlier))}</div>
+      <div class="small muted shared">Same alarm · same metric pattern · same recovery behavior</div>`;
+  }
+  return `<b>${b.score}%</b> <span class="muted">· ${esc(b.id)}</span>
+    <div class="small muted shared">Different cause, similar failure pattern</div>
+    ${b.shared_sequence?.length ? `<div class="small muted shared">Shared pattern: ${esc(sharedPattern(b.shared_sequence))}</div>` : ""}`;
+}
+
+function recurrenceDays(rows) {
+  const first = new Date(rows[rows.length - 1].started_at), last = new Date(rows[0].started_at);
+  return Math.max(1, Math.ceil((last - first) / 86400000));
+}
+
+function outcomeCell(r) {
+  return `<div class="small">${r.recovered_automatically ? "Recovered automatically" : "—"}</div>
+    <div class="small muted">${r.resolution_recorded ? "Resolution recorded" : "No resolution recorded"}</div>
+    <div class="small muted">Cause: ${r.cause_identified ? "suspected (see incident)" : "Insufficient evidence"}</div>`;
+}
+
+function incidentTable(rows, realWorld = false) {
   return `<div class="table-wrap"><table class="dash-table">
-    <thead><tr><th>Incident</th><th>Status</th><th>Started</th><th>Trigger</th><th>Closest historical match</th><th>Source</th><th></th></tr></thead>
+    <thead><tr><th>Incident</th><th>${realWorld ? "Outcome" : "Status"}</th><th>Started</th><th>Trigger</th>
+      <th>${realWorld ? "Previous occurrence" : "Closest historical match"}</th><th>Source</th><th></th></tr></thead>
     <tbody>${rows.map((r) => `
       <tr class="clickable" data-id="${esc(r.id)}">
         <td><div class="inc-id">${esc(r.id)}</div><div>${esc(r.title)}</div></td>
-        <td>${statusBadge(r.status)}</td>
+        <td>${realWorld ? outcomeCell(r) : statusBadge(r.status)}</td>
         <td class="mono">${esc(fmtDateTime(r.started_at))}</td>
         <td class="hide-sm"><span class="mono small">${esc(r.trigger?.alarm_name || "—")}</span></td>
-        <td class="match-cell">${r.best_match ? `<b>${r.best_match.score}%</b> <span class="muted">· ${esc(r.best_match.id)}</span>
-            ${r.best_match.shared_sequence?.length ? `<div class="small muted shared">Shared pattern: ${esc(sharedPattern(r.best_match.shared_sequence))}</div>` : ""}`
-          : `<span class="faint">${r.analyzed_at ? "No match ≥ 60%" : isUnderAnalysis(r) ? "Not analyzed" : "—"}</span>`}</td>
+        <td class="match-cell">${matchCell(r)}</td>
         <td class="hide-sm">${sourceBadge(r.source_type)}</td>
         <td><a href="#/incidents/${esc(r.id)}">View Incident</a></td>
       </tr>`).join("")}
@@ -318,12 +352,14 @@ function heroHTML(m, matches, a) {
     </section>`;
   }
   const top = matches[0];
+  if (isExact(top)) return exactHeroHTML(top);
   return `<section class="hero" style="margin-top:16px">
     <div class="headline">
       <span class="score">${top.score}%</span>
       <span>similar to <a href="#/incidents/${esc(top.incident_id)}"><b>${esc(top.incident_id)}</b></a> — ${esc(top.title)}
         <span class="faint small">· ${esc(fmtDateTime(top.started_at))} · ${sourceBadge(top.source_type)}</span></span>
     </div>
+    <div class="muted"><b>Pattern similarity:</b> different cause, similar failure pattern.</div>
     ${top.shared_sequence?.length ? `<div class="shared-pattern">Shared pattern: <b>${esc(sharedPattern(top.shared_sequence, 6, true))}</b></div>` : ""}
     <div class="grid-2" style="gap:20px">
       <div>
@@ -335,6 +371,29 @@ function heroHTML(m, matches, a) {
       ${lastTimeHTML(top)}
     </div>
     <div class="small faint">Historical comparison, not a prediction. The score is calculated from five documented factors, not by AI.</div>
+  </section>`;
+}
+
+function exactHeroHTML(top) {
+  return `<section class="hero exact" style="margin-top:16px">
+    <div class="headline">
+      <span class="score exact-label">Exact recurrence</span>
+      <span>of <a href="#/incidents/${esc(top.incident_id)}"><b>${esc(top.incident_id)}</b></a>, the previous occurrence
+        <span class="faint small">· ${esc(fmtDateTime(top.started_at))} · ${esc(fmtGap(top.minutes_earlier))} · ${sourceBadge(top.source_type)}</span></span>
+    </div>
+    <div><b>Recurrence score: ${top.score}%</b> <span class="muted">· the same production failure pattern recurring over time</span></div>
+    <div class="grid-2" style="gap:20px">
+      <div>
+        <h3 style="margin-bottom:6px">Reasons</h3>
+        <ul class="why">${top.exact_reasons.map((r) => `<li><span class="why-icon" style="color:var(--good)">✓</span><span>${esc(r)}</span></li>`).join("")}</ul>
+        ${top.differences?.length ? `<h3 style="margin:12px 0 6px">What differed this time</h3>
+          <ul class="why">${top.differences.map((d) => `<li><span class="why-icon" style="color:var(--text-2)">≠</span><span class="small">${esc(d)}</span></li>`).join("")}</ul>` : ""}
+        <details style="margin-top:10px"><summary class="small">Score breakdown (five documented factors)</summary>${whyList(top.breakdown)}</details>
+      </div>
+      ${lastTimeHTML(top)}
+    </div>
+    <div class="small faint">Exact recurrence means all defined conditions match: alarm type, metric, threshold behavior and
+    recovery pattern. The score is calculated by the application, not by AI.</div>
   </section>`;
 }
 
@@ -552,7 +611,7 @@ function similarHTML(m, matches, a) {
   return head + (omitted.length ? `<div class="notice warn" style="margin-bottom:10px">Factors excluded from the score: ${omitted.map(([k, v]) => `${esc(k)} (${esc(v)})`).join("; ")}. The score is normalized over the remaining factors.</div>` : "")
     + matches.map((s) => `<div class="match">
       <div class="match-head">
-        <span class="match-score">${s.score}%</span>
+        <span class="match-score">${isExact(s) ? `<span class="exact-label">EXACT RECURRENCE</span> <span class="small muted">(${s.score}%)</span>` : `${s.score}%`}</span>
         <a href="#/incidents/${esc(s.incident_id)}"><b>${esc(s.incident_id)}</b></a>
         <span>${esc(s.title)}</span>
         <span class="faint small">${esc(fmtDateTime(s.started_at))}</span>

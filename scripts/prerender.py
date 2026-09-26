@@ -10,6 +10,7 @@ Data comes from the public API (read-only). Run it after the live incident is an
 then build and deploy as usual.
 """
 import argparse
+import math
 import json
 import re
 import subprocess
@@ -102,7 +103,8 @@ def render(api):
       <p><b>Evidence: CloudWatch + CloudTrail</b> (real AWS evidence from the isolated demo environment)</p>
       <h3>Closest historical match: {top['score']}% similar to {e(top['incident_id'])}</h3>
       <p>{e(top['title'])}. Previous incident: {e(dt(top.get('started_at')))}, {e(SOURCE.get(top.get('source_type'), ''))}.</p>
-      <p>Shared pattern: <b>{e(pattern(top.get('shared_sequence', [])))}</b></p>
+      <p><b>Pattern similarity:</b> different cause, similar failure pattern.
+      Shared pattern: <b>{e(pattern(top.get('shared_sequence', [])))}</b></p>
       <h3>Why {top['score']}% similar?</h3><ul>{why}</ul>
       <h3>What is different</h3><ul>{diff}</ul>
       <h3>What happened last time?</h3>
@@ -122,16 +124,26 @@ def render(api):
     if recurrence_row:
         m = get(api, f"/api/incidents/{recurrence_row['id']}")
         top = m["analysis"]["similar"][0]
+        first = min(r["started_at"] for r in real_world)
+        last = max(r["started_at"] for r in real_world)
+        days = max(1, math.ceil((datetime.fromisoformat(last.replace("Z", "+00:00"))
+                                 - datetime.fromisoformat(first.replace("Z", "+00:00"))).total_seconds() / 86400))
+        exact = top.get("match_type") == "exact_recurrence"
+        reasons = "".join(f"<li>{e(r)}</li>" for r in top.get("exact_reasons", []))
         diff = "".join(f"<li>{e(d)}</li>" for d in top.get("differences", []))
+        gap = top.get("minutes_earlier")
+        gap_txt = f"{gap // 60}h {gap % 60}m earlier" if gap is not None else ""
         parts.append(f'''<section class="panel">
-      <p class="muted">Exact recurrence in real production data (sanitized)</p>
-      <h2>{e(m['title'])}: {len(real_world)} ALARM → OK cycles of the same alarm</h2>
-      <p>{e(m['summary'])}</p>
-      <h3>Closest historical match: {top['score']}% similar to {e(top['incident_id'])}, the previous cycle</h3>
-      <p>Shared pattern: <b>{e(pattern(top.get('shared_sequence', [])))}</b>. What is different:</p><ul>{diff}</ul>
-      <p>What happened last time? Previous suspected cause: insufficient evidence to identify a likely cause.
-      Previous action: no resolution recorded. Previous outcome: the alarm returned to OK on its own after
-      {top.get('recovered_after_min')} minutes.</p>
+      <p class="muted">Captured real-world recurrences (sanitized production data)</p>
+      <h2>The same production alarm recurred {len(real_world)} times in {days} days.</h2>
+      <p>Real production data shows the same operational failure (database free memory below its alarm threshold)
+      recurring. Each occurrence is stored as a separate Incident Memory and compared with previous occurrences.
+      Repeated incidents should become reusable operational memory, not repeated investigation work.</p>
+      <h3>Latest occurrence: {"EXACT RECURRENCE" if exact else f"{top['score']}% similar"} of {e(top['incident_id'])},
+      the previous occurrence ({e(gap_txt)})</h3>
+      {f"<p>Recurrence score: {top['score']}%. Reasons:</p><ul>{reasons}</ul>" if exact else ""}
+      <p>What differed this time:</p><ul>{diff}</ul>
+      <p>Outcome: recovered automatically. No resolution recorded. Cause: insufficient evidence.</p>
       <p><b>Evidence: CloudWatch alarm history and metric datapoints</b> (captured real-world, sanitized: names and
       identifiers removed; no cause, change or action added).</p>
     </section>''')

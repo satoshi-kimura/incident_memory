@@ -271,3 +271,7 @@ details summary { cursor: pointer; font-weight: 600; }
 .last-time .next { font-size: 14px; }
 
 .intro .differentiator { color: var(--text); border-left: 3px solid var(--accent); padding-left: 10px; }
+
+.exact-label { letter-spacing: .02em; color: var(--accent-ink); }
+.hero.exact { border-left-color: var(--good); }
+.hero .score.exact-label { font-size: 24px; }

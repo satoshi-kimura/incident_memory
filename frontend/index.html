@@ -40,7 +40,8 @@
       <p><b>Evidence: CloudWatch + CloudTrail</b> (real AWS evidence from the isolated demo environment)</p>
       <h3>Closest historical match: 82% similar to INC-0012</h3>
       <p>API degradation after database connection pool change. Previous incident: 2026-07-14 22:45 UTC, Seeded demo (fictional).</p>
-      <p>Shared pattern: <b>configuration change → errors → latency → concurrency → alarm</b></p>
+      <p><b>Pattern similarity:</b> different cause, similar failure pattern.
+      Shared pattern: <b>configuration change → errors → latency → concurrency → alarm</b></p>
       <h3>Why 82% similar?</h3><ul><li><b>Trigger / alarm signature</b> 25/25: Same alarm: Lambda Duration (latency)</li><li><b>AWS service / resource type</b> 6.7/20: Shared: Lambda function; only in the historical incident: RDS database, SSM parameter</li><li><b>Observed signal overlap</b> 20/25: 3 of 3 current signals also seen: Lambda ConcurrentExecutions increased, Lambda Duration increased, Lambda Errors increased; only in the historical incident: RDS DatabaseConnections increased, RDS FreeableMemory decreased</li><li><b>Event sequence</b> 20/20: Same ordering of 5 of 5 events: configuration change → Lambda Errors increased → Lambda Duration increased → Lambda ConcurrentExecutions increased → Lambda Duration alarm</li><li><b>Preceding change</b> 10/10: Both preceded by a configuration change, but to a different resource (Lambda function here, SSM parameter in the historical incident)</li></ul>
       <h3>What is different</h3><ul><li>Different change target: Lambda function configuration here vs database connection pool (SSM parameter) in INC-0012</li><li>INC-0012 also involved: RDS database, SSM parameter</li><li>Signals seen only in INC-0012: RDS DatabaseConnections increased, RDS FreeableMemory decreased</li><li>Peak Lambda Duration differs: 2,652 ms here vs 2,310 ms in INC-0012</li><li>Peak Lambda ConcurrentExecutions differs: 3 here vs 4 in INC-0012</li><li>Peak Lambda Errors differs: 5 here vs 38 in INC-0012</li><li>Recovery took 10 min here vs 14 min in INC-0012</li></ul>
       <h3>What happened last time?</h3>
@@ -57,14 +58,16 @@
       It is a historical comparison, not a prediction.</p>
     </section>
     <section class="panel">
-      <p class="muted">Exact recurrence in real production data (sanitized)</p>
-      <h2>Database free-memory alarm with automatic recovery: 27 ALARM → OK cycles of the same alarm</h2>
-      <p>Free memory on a production PostgreSQL database fell below the 128.0 MiB alarm threshold (lowest 78.4 MiB). The alarm entered ALARM at 18:33 UTC and returned to OK on its own 863 minutes later. No resolution was recorded. This is cycle 27 of 27 ALARM/OK cycles of the same alarm between 2026-09-21 and 2026-09-26.</p>
-      <h3>Closest historical match: 100% similar to INC-20260925-1706, the previous cycle</h3>
-      <p>Shared pattern: <b>DB memory ↓ → alarm</b>. What is different:</p><ul><li>Lowest RDS FreeableMemory differs: 78.4 MiB here vs 127.0 MiB in INC-20260925-1706</li><li>Recovery took 863 min here vs 2 min in INC-20260925-1706</li></ul>
-      <p>What happened last time? Previous suspected cause: insufficient evidence to identify a likely cause.
-      Previous action: no resolution recorded. Previous outcome: the alarm returned to OK on its own after
-      2 minutes.</p>
+      <p class="muted">Captured real-world recurrences (sanitized production data)</p>
+      <h2>The same production alarm recurred 27 times in 5 days.</h2>
+      <p>Real production data shows the same operational failure (database free memory below its alarm threshold)
+      recurring. Each occurrence is stored as a separate Incident Memory and compared with previous occurrences.
+      Repeated incidents should become reusable operational memory, not repeated investigation work.</p>
+      <h3>Latest occurrence: EXACT RECURRENCE of INC-20260925-1706,
+      the previous occurrence (1h 27m earlier)</h3>
+      <p>Recurrence score: 100%. Reasons:</p><ul><li>Same alarm type: RDS FreeableMemory (LessThanThreshold)</li><li>Same metric: FreeableMemory</li><li>Same threshold behavior: below 128.0 MiB</li><li>Same ALARM → OK recovery pattern: returned to OK with no recorded action</li></ul>
+      <p>What differed this time:</p><ul><li>Lowest RDS FreeableMemory differs: 78.4 MiB here vs 127.0 MiB in INC-20260925-1706</li><li>Recovery took 863 min here vs 2 min in INC-20260925-1706</li></ul>
+      <p>Outcome: recovered automatically. No resolution recorded. Cause: insufficient evidence.</p>
       <p><b>Evidence: CloudWatch alarm history and metric datapoints</b> (captured real-world, sanitized: names and
       identifiers removed; no cause, change or action added).</p>
     </section>
@@ -83,7 +86,7 @@
             event sequence 20, preceding change 10.</li>
         <li>Amazon Bedrock explains the evidence; every suspected cause must cite evidence IDs.</li>
       </ul>
-      <p class="small faint">Prerendered from the live API at 2026-09-26 09:52 UTC
+      <p class="small faint">Prerendered from the live API at 2026-09-26 12:29 UTC
       so the page is readable without JavaScript. The interactive app replaces this content in the browser.</p>
     </section>
     <!-- PRERENDER:END -->

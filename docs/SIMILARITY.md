@@ -115,6 +115,24 @@ INC-0009 (DynamoDB capacity reduction → throttling → latency → alarm) scor
 Everything else is below 60 % and not shown. The UI renders the breakdown as **"Why 82% similar?"**, followed by
 **"What is different"** and **"What happened last time?"**.
 
+## Display rule: pattern similarity vs exact recurrence
+
+The score is always calculated the same way and stored as is. Only the label differs.
+
+**EXACT RECURRENCE** is shown only when **all** defined conditions hold:
+
+1. the score is 100 over the available factors,
+2. the same alarm type: service, metric and comparison operator,
+3. the same threshold,
+4. the same signals in the same order, and
+5. the same recovery behavior: both incidents returned to OK with no recorded action.
+
+The dashboard then shows `EXACT RECURRENCE · <previous incident>` with the time since the previous occurrence
+(computed from the two `started_at` timestamps), and the detail page shows `Recurrence score: 100%` with the
+four reasons. A 100 % score that fails any condition (for example a different threshold) is shown as a plain
+percentage. Everything else is **pattern similarity**, shown as a percentage with "different cause, similar
+failure pattern" when the preceding change or resources differ (for example the demo's 82 % match).
+
 ## Worked example: exact recurrence (captured real-world data)
 
 Cycle 27 of a production database free-memory alarm (2026-09-25 18:33 UTC) compared with cycle 26 (17:06 UTC):

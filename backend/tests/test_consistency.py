@@ -125,7 +125,9 @@ class ConsistencyTest(unittest.TestCase):
         static = html.split("<!-- PRERENDER:START -->")[1].split("<!-- PRERENDER:END -->")[0]
         for text in ("Incident Memory", "Your infrastructure remembers what happened last time.",
                      "Recent analyzed incident", "Closest historical match", "% similar to INC-", "Shared pattern",
-                     "What happened last time?", "Previous action", "Previous outcome", "CloudWatch + CloudTrail"):
+                     "What happened last time?", "Previous action", "Previous outcome", "CloudWatch + CloudTrail",
+                     "Pattern similarity:", "EXACT RECURRENCE", "Recurrence score: 100%",
+                     "The same production alarm recurred"):
             self.assertIn(text, html if text.startswith(("Incident Memory", "Your infra")) else static, text)
 
     def test_seeded_evidence_is_labeled_fictional(self):

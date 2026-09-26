@@ -262,5 +262,11 @@ def summary_row(memory):
                     "metric": trigger.get("metric"), "service": trigger.get("service")},
         "analyzed_at": analysis.get("analyzed_at"),
         "best_match": {"id": top[0]["incident_id"], "score": top[0]["score"],
+                       "match_type": top[0].get("match_type", "pattern_similarity"),
+                       "minutes_earlier": top[0].get("minutes_earlier"),
                        "shared_sequence": top[0].get("shared_sequence", [])} if top else None,
+        "recovered_automatically": bool(memory.get("ended_at")) and not memory.get("resolution"),
+        "resolution_recorded": bool(memory.get("resolution")),
+        "cause_identified": bool(memory.get("suspected_causes")
+                                 or ((analysis.get("ai") or {}).get("suspected_causes"))),
     }
