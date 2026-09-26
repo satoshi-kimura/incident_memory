@@ -88,9 +88,9 @@ with their offsets measured from that shared event, for example:
 
 This is a **historical comparison, not a prediction**, and the UI says so.
 
-## Worked example (live demo incident INC-20260925-1750, real AWS data)
+## Worked example (demo incident INC-20260925-1750, real AWS data, now CAPTURED_DEMO)
 
-**Current incident (LIVE_DEMO):** a Lambda configuration change at 17:41 UTC (shorter downstream timeout plus retries;
+**Current incident (collected live, kept as CAPTURED_DEMO):** a Lambda configuration change at 17:41 UTC (shorter downstream timeout plus retries;
 CloudTrail shows the API call, not the values). Then errors ↑ (17:43, about 5 per minute, below the errors alarm
 threshold of 10), Duration ↑ (17:46), ConcurrentExecutions ↑ (17:47), and the latency alarm at 17:50. An earlier,
 unrelated configuration change at 17:29 is in the window but is not the preceding change: the preceding change is

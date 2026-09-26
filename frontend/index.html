@@ -26,19 +26,21 @@
     <!-- PRERENDER:START -->
     <section class="intro">
       <h1>Have we seen this before?</h1>
-      <p>Monitoring tells you something is wrong. Incident Memory reconstructs each AWS incident from CloudWatch and
-      CloudTrail evidence, stores it as a structured memory, and compares new incidents with what happened last time.</p>
-      <p class="differentiator"><b>Cloud monitoring helps you investigate what is happening now. Incident Memory remembers
-      what your team learned last time:</b> incidents are kept as long-term structured memories, and the previous
-      cause, action and recovery are reused when a similar pattern returns.</p>
+      <p>A new AWS incident occurs. Incident Memory reconstructs what happened, recognizes a similar historical failure
+      pattern, and shows what worked last time.</p>
+      <p class="differentiator"><b>Monitoring helps you understand what is happening now. Incident Memory remembers what
+      worked last time:</b> incidents are kept as long-term structured memories, and the previous cause, action and
+      recovery are reused when a similar pattern returns.</p>
     </section>
     <section class="panel">
-      <h2>Featured analysis: Orders API latency after Lambda configuration change</h2>
-      <p class="muted">INC-20260925-1750 · Live demo · Started 2026-09-25 17:50 UTC ·
-      Trigger: incident-memory-demo-orders-api-latency-high (Lambda Duration) · AWS evidence: CloudWatch + CloudTrail</p>
-      <h3>82% similar to INC-0012: API degradation after database connection pool change</h3>
-      <p>Previous incident: 2026-07-14 22:45 UTC, Seeded demo (fictional).
-      Shared pattern: <b>configuration change → errors → latency → concurrency → alarm</b></p>
+      <p class="muted">Recent analyzed incident</p>
+      <h2>Orders API latency after Lambda configuration change</h2>
+      <p class="muted">INC-20260925-1750 · Captured demo · Started 2026-09-25 17:50 UTC ·
+      Trigger: incident-memory-demo-orders-api-latency-high (Lambda Duration)</p>
+      <p><b>Evidence: CloudWatch + CloudTrail</b> (real AWS evidence from the isolated demo environment)</p>
+      <h3>Closest historical match: 82% similar to INC-0012</h3>
+      <p>API degradation after database connection pool change. Previous incident: 2026-07-14 22:45 UTC, Seeded demo (fictional).</p>
+      <p>Shared pattern: <b>configuration change → errors → latency → concurrency → alarm</b></p>
       <h3>Why 82% similar?</h3><ul><li><b>Trigger / alarm signature</b> 25/25: Same alarm: Lambda Duration (latency)</li><li><b>AWS service / resource type</b> 6.7/20: Shared: Lambda function; only in the historical incident: RDS database, SSM parameter</li><li><b>Observed signal overlap</b> 20/25: 3 of 3 current signals also seen: Lambda ConcurrentExecutions increased, Lambda Duration increased, Lambda Errors increased; only in the historical incident: RDS DatabaseConnections increased, RDS FreeableMemory decreased</li><li><b>Event sequence</b> 20/20: Same ordering of 5 of 5 events: configuration change → Lambda Errors increased → Lambda Duration increased → Lambda ConcurrentExecutions increased → Lambda Duration alarm</li><li><b>Preceding change</b> 10/10: Both preceded by a configuration change, but to a different resource (Lambda function here, SSM parameter in the historical incident)</li></ul>
       <h3>What is different</h3><ul><li>Different change target: Lambda function configuration here vs database connection pool (SSM parameter) in INC-0012</li><li>INC-0012 also involved: RDS database, SSM parameter</li><li>Signals seen only in INC-0012: RDS DatabaseConnections increased, RDS FreeableMemory decreased</li></ul>
       <h3>What happened last time?</h3>
@@ -50,12 +52,12 @@
         <li>Recovery time: 14 minutes after the alarm</li>
       </ul>
       <h3>Incident summary (Amazon Bedrock, grounded in the evidence below)</h3><p>The Lambda function incident-memory-demo-orders-api experienced a latency spike (1,399 ms vs. 1,000 ms threshold) at 2026-09-25T17:50:48Z. Preceding this, Errors rose to 5 from zero at 2026-09-25T17:43:00Z, Duration jumped to 2,652 ms from 87 ms at 2026-09-25T17:46:00Z, and ConcurrentExecutions rose to 3 from 1 at 2026-09-25T17:47:00Z. The alarm returned to OK by 2026-09-25T18:00:48Z. Historical incident INC-0012 showed similar latency and concurrency signals after a configuration change.</p>
-      <h3>Timeline (real AWS evidence)</h3><ul><li><code>17:29</code> UpdateFunctionConfiguration on incident-memory-demo-orders-api (configuration change) <code>CT-001</code> <span class="faint">(CloudTrail)</span></li><li><code>17:41</code> UpdateFunctionConfiguration on incident-memory-demo-orders-api (configuration change) <code>CT-002</code> <span class="faint">(CloudTrail)</span></li><li><code>17:43</code> Errors increased from 0 to 5 (up from zero) <code>CW-001</code> <span class="faint">(CloudWatch)</span></li><li><code>17:46</code> Duration increased from 87 ms to 2,652 ms (30.6x baseline) <code>CW-002</code> <span class="faint">(CloudWatch)</span></li><li><code>17:47</code> ConcurrentExecutions increased from 1 to 3 (3.0x baseline) <code>CW-003</code> <span class="faint">(CloudWatch)</span></li><li><code>17:50</code> Alarm incident-memory-demo-orders-api-latency-high entered ALARM (Duration 1,399 ms, threshold 1,000 ms) <code>CW-004</code> <span class="faint">(CloudWatch)</span></li><li><code>18:00</code> Alarm incident-memory-demo-orders-api-latency-high returned to OK <code>CW-005</code> <span class="faint">(CloudWatch)</span></li></ul>
+      <h3>Timeline (evidence: CloudWatch + CloudTrail)</h3><ul><li><code>17:29</code> UpdateFunctionConfiguration on incident-memory-demo-orders-api (configuration change) <code>CT-001</code> <span class="faint">(CloudTrail)</span></li><li><code>17:41</code> UpdateFunctionConfiguration on incident-memory-demo-orders-api (configuration change) <code>CT-002</code> <span class="faint">(CloudTrail)</span></li><li><code>17:43</code> Errors increased from 0 to 5 (up from zero) <code>CW-001</code> <span class="faint">(CloudWatch)</span></li><li><code>17:46</code> Duration increased from 87 ms to 2,652 ms (30.6x baseline) <code>CW-002</code> <span class="faint">(CloudWatch)</span></li><li><code>17:47</code> ConcurrentExecutions increased from 1 to 3 (3.0x baseline) <code>CW-003</code> <span class="faint">(CloudWatch)</span></li><li><code>17:50</code> Alarm incident-memory-demo-orders-api-latency-high entered ALARM (Duration 1,399 ms, threshold 1,000 ms) <code>CW-004</code> <span class="faint">(CloudWatch)</span></li><li><code>18:00</code> Alarm incident-memory-demo-orders-api-latency-high returned to OK <code>CW-005</code> <span class="faint">(CloudWatch)</span></li></ul>
       <p class="small faint">The similarity score is calculated from five documented factors by the application, not by AI.
       It is a historical comparison, not a prediction.</p>
     </section>
     <section class="panel">
-      <h2>Incident memory</h2><ul><li><code>INC-20260925-1750</code> Orders API latency after Lambda configuration change · Live demo · Started 2026-09-25 17:50 UTC · closest match 82% INC-0012</li><li><code>INC-0015</code> Throttling after reserved concurrency change · Seeded demo (fictional) · Started 2026-08-05 11:18 UTC</li><li><code>INC-0012</code> API degradation after database connection pool change · Seeded demo (fictional) · Started 2026-07-14 22:45 UTC</li><li><code>INC-0010</code> Errors after code deployment — missing environment variable · Seeded demo (fictional) · Started 2026-06-24 16:04 UTC</li><li><code>INC-0009</code> Orders API latency after DynamoDB capacity reduction · Seeded demo (fictional) · Started 2026-06-11 09:25 UTC</li><li><code>INC-0007</code> Throttling during campaign traffic spike · Seeded demo (fictional) · Started 2026-05-02 13:09 UTC</li></ul>
+      <h2>Incident memory</h2><ul><li><code>INC-20260925-1750</code> Orders API latency after Lambda configuration change · Captured demo · Started 2026-09-25 17:50 UTC · closest match 82% INC-0012</li><li><code>INC-0015</code> Throttling after reserved concurrency change · Seeded demo (fictional) · Started 2026-08-05 11:18 UTC</li><li><code>INC-0012</code> API degradation after database connection pool change · Seeded demo (fictional) · Started 2026-07-14 22:45 UTC</li><li><code>INC-0010</code> Errors after code deployment — missing environment variable · Seeded demo (fictional) · Started 2026-06-24 16:04 UTC</li><li><code>INC-0009</code> Orders API latency after DynamoDB capacity reduction · Seeded demo (fictional) · Started 2026-06-11 09:25 UTC</li><li><code>INC-0007</code> Throttling during campaign traffic spike · Seeded demo (fictional) · Started 2026-05-02 13:09 UTC</li></ul>
     </section>
     <section class="panel">
       <h2>How it works</h2>
@@ -68,7 +70,7 @@
             event sequence 20, preceding change 10.</li>
         <li>Amazon Bedrock explains the evidence; every suspected cause must cite evidence IDs.</li>
       </ul>
-      <p class="small faint">Prerendered from the live API at 2026-09-26 03:34 UTC
+      <p class="small faint">Prerendered from the live API at 2026-09-26 05:14 UTC
       so the page is readable without JavaScript. The interactive app replaces this content in the browser.</p>
     </section>
     <!-- PRERENDER:END -->

@@ -63,15 +63,15 @@ def incident_item(x):
 
 def render(api):
     rows = get(api, "/api/incidents")["incidents"]
-    featured_row = next((r for r in rows if r["source_type"] == "LIVE_DEMO" and r.get("best_match")), None)
+    featured_row = next((r for r in rows if r["status"] != "RESOLVED" and r.get("best_match")), None)
     e = escape
     parts = ['''<section class="intro">
       <h1>Have we seen this before?</h1>
-      <p>Monitoring tells you something is wrong. Incident Memory reconstructs each AWS incident from CloudWatch and
-      CloudTrail evidence, stores it as a structured memory, and compares new incidents with what happened last time.</p>
-      <p class="differentiator"><b>Cloud monitoring helps you investigate what is happening now. Incident Memory remembers
-      what your team learned last time:</b> incidents are kept as long-term structured memories, and the previous
-      cause, action and recovery are reused when a similar pattern returns.</p>
+      <p>A new AWS incident occurs. Incident Memory reconstructs what happened, recognizes a similar historical failure
+      pattern, and shows what worked last time.</p>
+      <p class="differentiator"><b>Monitoring helps you understand what is happening now. Incident Memory remembers what
+      worked last time:</b> incidents are kept as long-term structured memories, and the previous cause, action and
+      recovery are reused when a similar pattern returns.</p>
     </section>''']
 
     if featured_row:
@@ -91,12 +91,14 @@ def render(api):
         timeline = "".join(timeline_item(x) for x in m["timeline"])
         ai = (a.get("ai") or {}).get("summary") if a.get("ai_status") == "DONE" else None
         parts.append(f'''<section class="panel">
-      <h2>Featured analysis: {e(m['title'])}</h2>
+      <p class="muted">Recent analyzed incident</p>
+      <h2>{e(m['title'])}</h2>
       <p class="muted">{e(m['id'])} · {e(SOURCE.get(m['source_type'], m['source_type']))} · Started {e(dt(m['started_at']))} ·
-      Trigger: {e(t.get('alarm_name', ''))} ({e(t.get('service', ''))} {e(t.get('metric', ''))}) · AWS evidence: CloudWatch + CloudTrail</p>
-      <h3>{top['score']}% similar to {e(top['incident_id'])}: {e(top['title'])}</h3>
-      <p>Previous incident: {e(dt(top.get('started_at')))}, {e(SOURCE.get(top.get('source_type'), ''))}.
-      Shared pattern: <b>{e(pattern(top.get('shared_sequence', [])))}</b></p>
+      Trigger: {e(t.get('alarm_name', ''))} ({e(t.get('service', ''))} {e(t.get('metric', ''))})</p>
+      <p><b>Evidence: CloudWatch + CloudTrail</b> (real AWS evidence from the isolated demo environment)</p>
+      <h3>Closest historical match: {top['score']}% similar to {e(top['incident_id'])}</h3>
+      <p>{e(top['title'])}. Previous incident: {e(dt(top.get('started_at')))}, {e(SOURCE.get(top.get('source_type'), ''))}.</p>
+      <p>Shared pattern: <b>{e(pattern(top.get('shared_sequence', [])))}</b></p>
       <h3>Why {top['score']}% similar?</h3><ul>{why}</ul>
       <h3>What is different</h3><ul>{diff}</ul>
       <h3>What happened last time?</h3>
@@ -108,7 +110,7 @@ def render(api):
         {f"<li>Recovery time: {r['time_to_recovery_min']} minutes after the alarm</li>" if r else ""}
       </ul>
       {f"<h3>Incident summary (Amazon Bedrock, grounded in the evidence below)</h3><p>{e(ai)}</p>" if ai else ""}
-      <h3>Timeline (real AWS evidence)</h3><ul>{timeline}</ul>
+      <h3>Timeline (evidence: CloudWatch + CloudTrail)</h3><ul>{timeline}</ul>
       <p class="small faint">The similarity score is calculated from five documented factors by the application, not by AI.
       It is a historical comparison, not a prediction.</p>
     </section>''')

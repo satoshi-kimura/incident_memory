@@ -100,7 +100,7 @@ def analyze(incident_id):
     if incident_id in store.hidden_episodes():
         raise NotFound(incident_id)
     existing = store.get(incident_id)
-    if existing and existing.get("source_type") != "LIVE_DEMO":
+    if existing and (existing.get("source_type") == "SEEDED_DEMO" or existing.get("status") == "RESOLVED"):
         raise NotAnalyzable("Historical incidents are stored memories and are not re-collected from AWS.")
     if existing and time.time() - parse_ts(existing["analysis"]["collected_at"]).timestamp() < config.COLLECTION_CACHE_SECONDS:
         return existing, False
@@ -125,6 +125,10 @@ def analyze(incident_id):
         memory = collect_and_build(incident_id, trigger_ts, trigger_alarm, start, min(window_end, datetime.now(timezone.utc)))
         if existing:
             memory["created_at"] = existing.get("created_at", memory["created_at"])
+        memory["analysis"]["evidence_final"] = evidence_is_final(memory, window_end)
+    if memory["analysis"]["evidence_final"]:
+        # Evidence was collected from the demo environment and is now kept as a memory.
+        memory["source_type"] = "CAPTURED_DEMO"
 
     history = [m for m in store.list() if m["id"] != incident_id]
     sources = memory["analysis"]["sources"]

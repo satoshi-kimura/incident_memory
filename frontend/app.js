@@ -40,6 +40,9 @@ function sourceBadge(type) {
   const [label, title] = SOURCE_LABELS[type] || [type, ""];
   return `<span class="badge ${type === "LIVE_DEMO" ? "live" : ""}" title="${esc(title)}">${esc(label)}</span>`;
 }
+// Incidents without a recorded resolution are analyzed against memory; RESOLVED ones are the memory.
+const isUnderAnalysis = (m) => m.status !== "RESOLVED";
+
 function statusBadge(status) {
   const label = { NEW: "New · not analyzed", OPEN: "Open · alarm active", RECOVERED: "Recovered · no resolution recorded",
                   RESOLVED: "Resolved" }[status] || status;
@@ -96,17 +99,17 @@ async function renderDashboard() {
     return;
   }
   const rows = data.incidents;
-  const live = rows.filter((r) => r.source_type === "LIVE_DEMO");
-  const history = rows.filter((r) => r.source_type !== "LIVE_DEMO");
+  const live = rows.filter(isUnderAnalysis);
+  const history = rows.filter((r) => !isUnderAnalysis(r));
 
   app.innerHTML = `
     <section class="intro">
       <h1>Have we seen this before?</h1>
-      <p>Monitoring tells you something is wrong. Incident Memory reconstructs each AWS incident from CloudWatch and
-      CloudTrail evidence, stores it as a structured memory, and compares new incidents with what happened last time.</p>
-      <p class="differentiator"><b>Cloud monitoring helps you investigate what is happening now. Incident Memory remembers
-      what your team learned last time:</b> incidents are kept as long-term structured memories, and the previous
-      cause, action and recovery are reused when a similar pattern returns.</p>
+      <p>A new AWS incident occurs. Incident Memory reconstructs what happened, recognizes a similar historical failure
+      pattern, and shows what worked last time.</p>
+      <p class="differentiator"><b>Monitoring helps you understand what is happening now. Incident Memory remembers what
+      worked last time:</b> incidents are kept as long-term structured memories, and the previous cause, action and
+      recovery are reused when a similar pattern returns.</p>
     </section>
     ${(data.warnings || []).map((w) => `<div class="notice warn" style="margin-bottom:12px">${esc(w)}</div>`).join("")}
     <section class="panel">
@@ -144,7 +147,7 @@ function incidentTable(rows) {
         <td class="hide-sm"><span class="mono small">${esc(r.trigger?.alarm_name || "—")}</span></td>
         <td class="match-cell">${r.best_match ? `<b>${r.best_match.score}%</b> <span class="muted">· ${esc(r.best_match.id)}</span>
             ${r.best_match.shared_sequence?.length ? `<div class="small muted shared">Shared pattern: ${esc(sharedPattern(r.best_match.shared_sequence))}</div>` : ""}`
-          : `<span class="faint">${r.analyzed_at ? "No match ≥ 60%" : r.source_type === "LIVE_DEMO" ? "Not analyzed" : "—"}</span>`}</td>
+          : `<span class="faint">${r.analyzed_at ? "No match ≥ 60%" : isUnderAnalysis(r) ? "Not analyzed" : "—"}</span>`}</td>
         <td class="hide-sm">${sourceBadge(r.source_type)}</td>
         <td><a href="#/incidents/${esc(r.id)}">View Incident</a></td>
       </tr>`).join("")}
@@ -166,7 +169,7 @@ async function renderIncident(id, preloaded) {
   }
   document.title = `${m.id} · Incident Memory`;
   const a = m.analysis;
-  const isLive = m.source_type === "LIVE_DEMO";
+  const isLive = isUnderAnalysis(m);
 
   app.innerHTML = `
     <a class="crumb" href="#/">← All incidents</a>
@@ -254,7 +257,7 @@ function pollAI(id, attempt) {
 
 function resultsHTML(m) {
   const a = m.analysis;
-  const isLive = m.source_type === "LIVE_DEMO";
+  const isLive = isUnderAnalysis(m);
   const matches = a?.similar || [];
   const explanation = pickExplanation(m);
   return `
@@ -572,7 +575,7 @@ function evidenceHTML(m) {
       Sources: ${Object.entries(a.sources).map(([k, v]) => `${esc(k.replace("_", " "))} ${v === "ok" ? "✓" : "✗ unavailable"}`).join(" · ")} ·
       AI: ${esc({ DONE: "done", PENDING: "pending", UNAVAILABLE: "unavailable" }[a.ai_status] || a.ai_status)} ·
       analysis ${a.duration_ms} ms</p>` : "";
-  return `<details ${m.source_type === "LIVE_DEMO" ? "" : "open"}>
+  return `<details ${isUnderAnalysis(m) ? "" : "open"}>
     <summary>Supporting Evidence (${ev.length})</summary>
     <div style="margin-top:10px">${meta}
     <div class="table-wrap"><table class="evidence-table"><thead><tr><th>ID</th><th>Source</th><th>Time (UTC)</th><th>Evidence</th></tr></thead>

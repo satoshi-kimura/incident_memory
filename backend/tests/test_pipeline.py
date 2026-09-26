@@ -31,7 +31,10 @@ class PipelineTest(unittest.TestCase):
         self.assertEqual(len(new), 1)
         status, m = self.call("POST", f"/api/incidents/{new[0]['id']}/analyze")
         self.assertEqual(status, 200)
-        self.assertEqual(m["source_type"], "LIVE_DEMO")
+        # The fixture incident recovered and its whole window was collected: its evidence is now a captured memory.
+        self.assertEqual(new[0]["source_type"], "LIVE_DEMO")
+        self.assertEqual(m["source_type"], "CAPTURED_DEMO")
+        self.assertTrue(m["analysis"]["evidence_final"])
         by_onset = [s["metric"] for s in sorted(m["signals"], key=lambda s: s["onset"])]
         self.assertEqual(by_onset, ["Errors", "Duration", "ConcurrentExecutions"])
         self.assertEqual(m["status"], "RECOVERED")

@@ -6,6 +6,8 @@ Live demo: **https://d2zs12dmk7373h.cloudfront.net** (no login, no AWS credentia
 
 AWS Zero to Shipped Hackathon · Category: **Commercial potential** · Lane: **Startups**
 
+> A new AWS incident occurs. Incident Memory reconstructs what happened, recognizes a similar historical failure pattern, and shows what worked last time.
+
 ---
 
 ## The problem
@@ -58,7 +60,7 @@ structured memory (trigger, timeline, signals, changes, cause, resolution, patte
 even with a different cause, Incident Memory shows why it matches, what is different, and **what the team did
 last time and how long recovery took**.
 
-> Cloud monitoring helps you investigate what is happening now. Incident Memory remembers what your team learned last time.
+> Monitoring helps you understand what is happening now. Incident Memory remembers what worked last time.
 
 ## What makes it different
 
@@ -75,7 +77,8 @@ last time and how long recovery took**.
 ## Try the demo (60 seconds)
 
 1. Open the live URL.
-2. Under **Current incidents**, open the live demo incident (source `LIVE DEMO`).
+2. Under **Recent analyzed incidents**, open *Orders API latency after Lambda configuration change*
+   (source `CAPTURED DEMO`: real CloudWatch and CloudTrail evidence collected from the isolated AWS demo environment).
 3. Click **Analyze Incident**.
 4. Read the result:
    - **The match**: "N% similar to INC-0012" (a different cause: a database connection pool change),
@@ -91,8 +94,8 @@ Data sources are labeled in the UI:
 
 | Label | Meaning |
 |---|---|
-| **LIVE DEMO** | Collected now from CloudWatch and CloudTrail in the isolated AWS demo environment |
-| **CAPTURED DEMO** | Captured earlier from a controlled incident in the isolated AWS demo environment |
+| **LIVE DEMO** | Collected now from CloudWatch and CloudTrail in the isolated AWS demo environment (while the incident's window is still open) |
+| **CAPTURED DEMO** | Collected earlier from a controlled incident in the isolated AWS demo environment and kept as a memory. A live incident becomes captured once it has recovered and its evidence window is complete |
 | **SEEDED DEMO** | Fictional incident created for comparison. It did not occur in AWS |
 
 No incident comes from a real production system.

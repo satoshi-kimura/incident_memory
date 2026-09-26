@@ -13,6 +13,8 @@ consistent with the product story.
 
 ## Story
 
+> A new AWS incident occurs. Incident Memory reconstructs what happened, recognizes a similar historical failure pattern, and shows what worked last time.
+
 Monitoring tools tell engineers that something is wrong.
 
 Engineers then spend time reconstructing what changed, what happened previously, and
@@ -57,7 +59,7 @@ structured memory (trigger, timeline, signals, changes, cause, resolution, patte
 even with a different cause, Incident Memory shows why it matches, what is different, and **what the team did
 last time and how long recovery took**.
 
-> Cloud monitoring helps you investigate what is happening now. Incident Memory remembers what your team learned last time.
+> Monitoring helps you understand what is happening now. Incident Memory remembers what worked last time.
 
 ## Why it matters (Startups lane)
 
@@ -121,11 +123,12 @@ leaking into a timeline, over-confident AI wording). The builder decided when th
 
 ## Honest labeling of demo data
 
-- `LIVE_DEMO`: collected from AWS for a controlled demo workload. The Lambda function simulates a
-  downstream database. The configuration change, Lambda metrics and alarms are real AWS events.
-- `CAPTURED_DEMO`: captured from a controlled incident in the same demo environment. The capture pipeline was
-  proven with a real run (`evidence/captured-demo-run-2026-09-25.json`). It is not in the comparison set, because an
-  identical incident from 41 minutes earlier would not show pattern recognition.
+- `LIVE_DEMO`: collected now from AWS for a controlled demo workload, while the incident's window is still open.
+  The Lambda function simulates a downstream service; the configuration change, Lambda metrics and alarms are real
+  AWS events.
+- `CAPTURED_DEMO`: the same real evidence, kept as a memory once the incident recovered and its window was complete.
+  The featured incident is shown with this label. Re-analysis compares the stored evidence again instead of
+  re-collecting it, because 1-minute metrics expire after 15 days.
 - `SEEDED_DEMO`: fictional historical incidents, clearly labeled, never presented as real production incidents.
 
 ## Checklist before submitting

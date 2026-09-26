@@ -108,6 +108,26 @@ class ConsistencyTest(unittest.TestCase):
         self.assertTrue(75 <= top["score"] <= 88, top["score"])
         self.assertTrue(any(d.startswith("Different change target") for d in top["differences"]))
 
+    def test_source_labels(self):
+        from datetime import datetime, timedelta, timezone
+        live = self.memories[-1]
+        self.assertEqual(live["source_type"], "CAPTURED_DEMO")          # recovered, full window collected
+        self.assertTrue(all(e["source"] in ("CloudWatch", "CloudTrail") for e in live["evidence"]))
+        for m in sample_memories():
+            self.assertEqual(m["source_type"], "SEEDED_DEMO")
+        # an incident whose window is still open keeps the LIVE label
+        in_progress = {"ended_at": None, "analysis": {"collected_at": datetime.now(timezone.utc).isoformat()}}
+        self.assertFalse(analysis.evidence_is_final(in_progress, datetime.now(timezone.utc) + timedelta(minutes=5)))
+
+    def test_landing_page_html_contains_the_demo_without_javascript(self):
+        from pathlib import Path
+        html = (Path(__file__).resolve().parents[2] / "frontend" / "index.html").read_text()
+        static = html.split("<!-- PRERENDER:START -->")[1].split("<!-- PRERENDER:END -->")[0]
+        for text in ("Incident Memory", "Your infrastructure remembers what happened last time.",
+                     "Recent analyzed incident", "Closest historical match", "% similar to INC-", "Shared pattern",
+                     "What happened last time?", "Previous action", "Previous outcome", "CloudWatch + CloudTrail"):
+            self.assertIn(text, html if text.startswith(("Incident Memory", "Your infra")) else static, text)
+
     def test_seeded_evidence_is_labeled_fictional(self):
         for m in sample_memories():
             self.assertEqual(m["source_type"], "SEEDED_DEMO")

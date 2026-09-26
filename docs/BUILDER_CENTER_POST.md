@@ -15,6 +15,8 @@ Copy the sections below into the AWS Builder Center project page.
 **Live app (no login, no AWS credentials):** https://d2zs12dmk7373h.cloudfront.net
 **Category:** Commercial potential · **Lane:** Startups
 
+> A new AWS incident occurs. Incident Memory reconstructs what happened, recognizes a similar historical failure pattern, and shows what worked last time.
+
 ### The 2 a.m. problem
 
 Monitoring tells you that something is wrong. Then the real work starts: an on-call engineer reconstructs what
@@ -74,7 +76,7 @@ structured memory (trigger, timeline, signals, changes, cause, resolution, patte
 even with a different cause, Incident Memory shows why it matches, what is different, and **what the team did
 last time and how long recovery took**.
 
-> Cloud monitoring helps you investigate what is happening now. Incident Memory remembers what your team learned last time.
+> Monitoring helps you understand what is happening now. Incident Memory remembers what worked last time.
 
 ### How it works
 
@@ -140,7 +142,8 @@ one or two people's heads.
 
 ### Honest notes
 
-- **LIVE DEMO** incidents are collected now from an isolated AWS demo environment. **SEEDED DEMO** incidents are
+- **LIVE DEMO** incidents are collected now from an isolated AWS demo environment; once they recover, their real
+  evidence is kept as **CAPTURED DEMO**. **SEEDED DEMO** incidents are
   fictional history created for comparison and are labeled as such. No incident comes from a production system.
 - Explanations currently use **Amazon Nova 2 Lite** on Bedrock. The model is a configuration value.
 - The similarity score is a historical comparison, not a prediction.
