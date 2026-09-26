@@ -4,9 +4,9 @@
 
 Live demo: **https://d2zs12dmk7373h.cloudfront.net** (no login, no AWS credentials)
 
-AWS Zero to Shipped Hackathon · Category: **Commercial potential** · Lane: **Startups**
+AWS Zero to Shipped Hackathon · Category: **Commercial potential** · Lane: **Startup**
 
-> A new AWS incident occurs. Incident Memory reconstructs what happened, recognizes a similar historical failure pattern, and shows what worked last time.
+> Incident Memory turns an AWS alarm into an answer: what changed, which past failure matches, and what worked last time. In the featured demo, real CloudWatch and CloudTrail evidence matches a different-cause incident at 82%, surfacing the previous rollback and 14-minute recovery.
 
 ---
 

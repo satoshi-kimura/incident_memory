@@ -4,7 +4,7 @@
 (about 2,600 characters) into the body field.** The longer version below is kept as reference material.
 
 - **Title:** Incident Memory: your infrastructure remembers what happened last time
-- **Tags:** `#commercial-potential` `#startups`
+- **Tags:** `#commercial-potential` `#startup`
 - **Live app:** https://d2zs12dmk7373h.cloudfront.net
 - **Cover image:** `evidence/screenshots/03-incident-analysis-light.png` (crop the top: score, "Why 82% similar?", "What happened last time?")
 - **Images in the body:** `architecture.png`, `evidence/screenshots/01-dashboard.png`, `evidence/screenshots/03-incident-analysis-light.png`, `evidence/screenshots/05-agent-calling-aws-mcp.png`, `evidence/screenshots/07-claude-code-mcp-aws-connected.png`
@@ -14,9 +14,13 @@
 ## Incident Memory: your infrastructure remembers what happened last time
 
 **Live app (no login, no AWS credentials):** https://d2zs12dmk7373h.cloudfront.net
-**Category:** Commercial potential · **Lane:** Startups
+**Category:** Commercial potential · **Lane:** Startup
 
-> A new AWS incident occurs. Incident Memory reconstructs what happened, recognizes a similar historical failure pattern, and shows what worked last time.
+> Incident Memory turns an AWS alarm into an answer: what changed, which past failure matches, and what worked last time.
+
+In the featured demo, real CloudWatch and CloudTrail evidence reconstructs a Lambda incident and matches it at
+**82%** to a past incident with a different cause. Incident Memory then surfaces the previous rollback and
+**14-minute recovery**—the operational memory an on-call engineer needs before repeating the investigation.
 
 ### The 2 a.m. problem
 
@@ -124,7 +128,7 @@ Proof of the AWS connection: the `/mcp` panel showing the AWS MCP Server connect
 
 *[image: 05-agent-calling-aws-mcp.png]*
 
-### Why this can be a business (Startups lane)
+### Why this can be a business (Startup lane)
 
 Every on-call team repeats investigations it has already done. Incident Memory makes past incidents queryable at
 the moment they matter: structured, comparable and backed by evidence.
