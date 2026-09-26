@@ -4,7 +4,7 @@ score = 100 * sum(weight_i * value_i) / sum(weight_i over available factors)
 value_i in [0, 1]. The score is computed here, never by the LLM.
 See docs/SIMILARITY.md for the full definition.
 """
-from .memory import describe_resource_type, describe_token
+from .memory import describe_resource_type, describe_token, parse_ts
 
 WEIGHTS = {
     "trigger": 25,
@@ -119,6 +119,8 @@ def unavailable_factors(cur, sources):
         missing["signals"] = "No significant metric changes detected"
     if sources.get("cloudtrail") == "error":
         missing["change"] = "CloudTrail event history unavailable"
+    elif sources.get("cloudtrail") == "not_captured":
+        missing["change"] = "Change history (CloudTrail) was not captured for this incident"
     if not cur["resource_types"]:
         missing["resources"] = "No resources identified"
     return missing
@@ -190,14 +192,54 @@ def differences(cur, hist, hist_id):
     return out
 
 
+# Memories usable as references: they have a known outcome (resolved, or recovered on their own).
+REFERENCE_STATUSES = ("RESOLVED", "RECOVERED")
+
+
+def _recovered_after_min(m):
+    if not (m.get("started_at") and m.get("ended_at")):
+        return None
+    return round((parse_ts(m["ended_at"]) - parse_ts(m["started_at"])).total_seconds() / 60)
+
+
+def magnitude_differences(cur_m, hist_m):
+    """How far shared signals moved and how long recovery took (explanatory only; not part of the score)."""
+    out = []
+    hist_by_token = {s["token"]: s for s in hist_m.get("signals", [])}
+    for s in cur_m.get("signals", []):
+        h = hist_by_token.get(s["token"])
+        if not h or s.get("peak") is None or h.get("peak") is None or s.get("unit") != h.get("unit"):
+            continue
+        ratio = s["peak"] / h["peak"] if h["peak"] else None
+        if ratio is not None and abs(ratio - 1) >= 0.05:
+            word = "Lowest" if s["direction"] == "down" else "Peak"
+            out.append(f"{word} {describe_token(s['token']).rsplit(' ', 1)[0]} differs: {_fmt(s['peak'], s['unit'])} here "
+                       f"vs {_fmt(h['peak'], h['unit'])} in {hist_m['id']}")
+    cur_min, hist_min = _recovered_after_min(cur_m), _recovered_after_min(hist_m)
+    if cur_min is not None and hist_min is not None and cur_min != hist_min:
+        out.append(f"Recovery took {cur_min} min here vs {hist_min} min in {hist_m['id']}")
+    return out
+
+
+def _fmt(value, unit):
+    if unit == "Bytes":
+        return f"{value / 1048576:,.1f} MiB"
+    if unit == "Milliseconds":
+        return f"{value:,.0f} ms"
+    return f"{value:,.0f}"
+
+
 def find_similar(current_memory, candidates, sources=None):
-    """Rank resolved historical memories; only matches >= MATCH_THRESHOLD are returned."""
+    """Rank earlier memories with a known outcome; only matches >= MATCH_THRESHOLD are returned."""
     cur = current_memory["pattern"]
     omitted = unavailable_factors(cur, sources or {})
+    started = current_memory.get("started_at")
     results = []
     for m in candidates:
-        if m["id"] == current_memory["id"] or m.get("status") != "RESOLVED":
+        if m["id"] == current_memory["id"] or m.get("status") not in REFERENCE_STATUSES:
             continue
+        if started and m.get("started_at") and m["started_at"] >= started:
+            continue  # only incidents that happened before this one can be "last time"
         score, breakdown = compare(cur, m["pattern"], omitted)
         results.append({
             "incident_id": m["id"],
@@ -208,12 +250,14 @@ def find_similar(current_memory, candidates, sources=None):
             "breakdown": breakdown,
             "next_events": what_happened_next(cur, m["pattern"]),
             "shared_sequence": shared_sequence(cur, m["pattern"]),
-            "differences": differences(cur, m["pattern"], m["id"]),
+            "differences": differences(cur, m["pattern"], m["id"]) + magnitude_differences(current_memory, m),
             "pattern": {"offsets_min": m["pattern"]["offsets_min"], "sequence": m["pattern"]["sequence"]},
             "suspected_causes": m.get("suspected_causes", []),
             "resolution": m.get("resolution"),
+            "recovered_after_min": _recovered_after_min(m),
         })
-    results.sort(key=lambda r: (-r["score"], r["incident_id"]))
+    # Highest score first; ties go to the most recent earlier incident, which is "last time".
+    results.sort(key=lambda r: (r["score"], r.get("started_at") or "", r["incident_id"]), reverse=True)
     return {
         "matches": [r for r in results if r["score"] >= MATCH_THRESHOLD][:TOP_N],
         "compared": len(results),

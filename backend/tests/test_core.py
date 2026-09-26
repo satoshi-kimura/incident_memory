@@ -89,7 +89,18 @@ class SimilarityTest(unittest.TestCase):
     def test_open_incidents_are_not_references(self):
         other = current_memory()
         other["id"] = "INC-OTHER"
+        other["status"] = "OPEN"
         self.assertEqual(find_similar(current_memory(), [other])["matches"], [])
+
+    def test_only_earlier_recovered_incidents_are_references(self):
+        cur = current_memory()
+        cur["started_at"] = at(8)
+        earlier, later = current_memory(), current_memory()
+        earlier.update(id="INC-EARLIER", status="RECOVERED", started_at=at(-60), ended_at=at(-40))
+        later.update(id="INC-LATER", status="RECOVERED", started_at=at(60), ended_at=at(80))
+        ids = [m["incident_id"] for m in find_similar(cur, [earlier, later])["matches"]]
+        self.assertEqual(ids, ["INC-EARLIER"])
+        self.assertEqual(find_similar(cur, [earlier])["matches"][0]["recovered_after_min"], 20)
 
 
 class SignalTest(unittest.TestCase):

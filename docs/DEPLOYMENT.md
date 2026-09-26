@@ -114,6 +114,22 @@ terraform plan -out=tfplan \
 
 The evidence fingerprint includes the model ID, so new analyses are generated with the new model.
 
+## Import captured real-world data (optional)
+
+A production alarm history exported by the operator (DescribeAlarmHistory JSON plus GetMetricStatistics JSON
+for the alarm's metric) can be imported as sanitized `CAPTURED_REAL_WORLD` memories, one per ALARM → OK cycle.
+The raw files stay outside the repository; only the sanitized result is stored.
+
+```
+cd backend
+TABLE_NAME=incident-memory-incidents AWS_REGION=us-east-1 \
+  ../.venv/bin/python -m scripts.import_real_world \
+  --history /path/to/alarm-history.json \
+  --datapoints /path/to/datapoints.json
+```
+
+The importer refuses to store anything that still contains an account ID, ARN or source-system name.
+
 ## Prerender the landing page
 
 The landing page contains a static, JavaScript-free version of the featured analysis, so crawlers and AI scoring

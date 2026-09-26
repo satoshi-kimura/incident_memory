@@ -24,6 +24,7 @@ function fmtValue(v, unit) {
   if (v === null || v === undefined) return "—";
   if (unit === "Milliseconds") return `${Math.round(v).toLocaleString("en-US")} ms`;
   if (unit === "Percent") return `${Math.round(v)}%`;
+  if (unit === "Bytes") return `${(v / 1048576).toLocaleString("en-US", { maximumFractionDigits: 1 })} MiB`;
   return Number.isInteger(v) ? v.toLocaleString("en-US") : v.toLocaleString("en-US", { maximumFractionDigits: 1 });
 }
 function relMin(m) {
@@ -34,6 +35,7 @@ function relMin(m) {
 const SOURCE_LABELS = {
   LIVE_DEMO: ["Live demo", "Collected now from CloudWatch and CloudTrail in the isolated AWS demo environment."],
   CAPTURED_DEMO: ["Captured demo", "Captured earlier from a controlled incident in the isolated AWS demo environment."],
+  CAPTURED_REAL_WORLD: ["Captured real-world", "Captured from a production system's CloudWatch alarm history and sanitized: names and identifiers removed. Facts only; no cause or action is added."],
   SEEDED_DEMO: ["Seeded demo", "Fictional incident created for comparison. It did not occur in AWS."],
 };
 function sourceBadge(type) {
@@ -99,7 +101,8 @@ async function renderDashboard() {
     return;
   }
   const rows = data.incidents;
-  const live = rows.filter(isUnderAnalysis);
+  const realWorld = rows.filter((r) => r.source_type === "CAPTURED_REAL_WORLD");
+  const live = rows.filter((r) => isUnderAnalysis(r) && r.source_type !== "CAPTURED_REAL_WORLD");
   const history = rows.filter((r) => !isUnderAnalysis(r));
 
   app.innerHTML = `
@@ -119,10 +122,22 @@ async function renderDashboard() {
       </div>
       ${live.length ? incidentTable(live) : `<p class="muted">No recent demo incident. Historical memories are listed below.</p>`}
     </section>
+    ${realWorld.length ? `<section class="panel">
+      <div class="section-head">
+        <h2>Captured real-world recurrences</h2>
+        <span class="small muted">Exact recurrence in real production data · sanitized</span>
+      </div>
+      <p class="small muted" style="margin:0 0 10px">The same production database free-memory alarm went through
+      ${realWorld.length} ALARM → OK cycles between ${esc(realWorld[realWorld.length - 1].started_at.slice(0, 10))} and
+      ${esc((realWorld[0].ended_at || realWorld[0].started_at).slice(0, 10))}. Each cycle is its own memory and is compared with the cycles before it.
+      Demo incidents above show <b>pattern similarity across different causes</b>; these show <b>exact recurrence</b>.</p>
+      ${incidentTable(realWorld.slice(0, 5))}
+      ${realWorld.length > 5 ? `<details><summary class="small">Show all ${realWorld.length} cycles</summary>${incidentTable(realWorld.slice(5))}</details>` : ""}
+    </section>` : ""}
     <section class="panel">
       <div class="section-head">
         <h2>Incident memory</h2>
-        <span class="small muted">Resolved incidents used for historical comparison</span>
+        <span class="small muted">Resolved demo incidents used for historical comparison</span>
       </div>
       ${incidentTable(history)}
       <ul class="legend-list">
@@ -183,6 +198,9 @@ async function renderIncident(id, preloaded) {
         ${a?.analyzed_at ? `<span>Analyzed <b class="mono">${esc(fmtDateTime(a.analyzed_at))}</b></span>` : ""}
       </div>
     </section>
+    ${m.source_type === "CAPTURED_REAL_WORLD" ? `<div class="notice" style="margin-bottom:16px"><b>Captured real-world data (sanitized).</b>
+      Exported from a production system's CloudWatch alarm history; names and identifiers are removed. Only the recorded
+      metric values and alarm transitions are shown. No cause, change or action is added.</div>` : ""}
     ${m.source_type === "SEEDED_DEMO" ? `<div class="notice" style="margin-bottom:16px"><b>Seeded demo data.</b>
       This is a fictional incident created for comparison. It did not occur in AWS, and its evidence is illustrative.</div>` : ""}
     ${triggerPanel(m)}
@@ -214,9 +232,11 @@ function analyzeBar(m) {
   return `<section class="panel analyze-bar">
     <div>
       <h2>${a ? "Analysis" : "This incident has not been analyzed yet"}</h2>
-      <div class="small muted">${a && a.evidence_final
-        ? `Evidence was collected from CloudWatch and CloudTrail on ${esc(fmtDateTime(a.collected_at))} (window ${esc(fmtTime(a.window.start))}–${esc(fmtTime(a.window.end))} UTC) and is kept as a memory. Re-running compares it again with ${a.compared_count} resolved incidents.`
-        : `Collects CloudWatch alarms and metrics and CloudTrail changes from ${a ? esc(fmtTime(a.window.start)) + "–" + esc(fmtTime(a.window.end)) + " UTC" : "30 minutes before to 15 minutes after the alarm"}, then compares the pattern with ${a ? a.compared_count : "all"} resolved incidents.`}</div>
+      <div class="small muted">${a && m.source_type === "CAPTURED_REAL_WORLD"
+        ? `Imported on ${esc(fmtDateTime(a.collected_at))} from an exported CloudWatch alarm history and metric datapoints (sanitized). Change history (CloudTrail) was not captured. Re-running compares it again with ${a.compared_count} earlier incidents.`
+        : a && a.evidence_final
+        ? `Evidence was collected from CloudWatch and CloudTrail on ${esc(fmtDateTime(a.collected_at))} (window ${esc(fmtTime(a.window.start))}–${esc(fmtTime(a.window.end))} UTC) and is kept as a memory. Re-running compares it again with ${a.compared_count} earlier incidents.`
+        : `Collects CloudWatch alarms and metrics and CloudTrail changes from ${a ? esc(fmtTime(a.window.start)) + "–" + esc(fmtTime(a.window.end)) + " UTC" : "30 minutes before to 15 minutes after the alarm"}, then compares the pattern with ${a ? a.compared_count : "all"} earlier incidents.`}</div>
     </div>
     <button class="btn ${a ? "" : "primary"}" id="analyze-btn">${a ? (a.evidence_final ? "Re-run comparison" : "Re-run analysis") : "Analyze Incident"}</button>
   </section>`;
@@ -281,10 +301,12 @@ function resultsHTML(m) {
 
 function sourcesNotice(a) {
   const labels = { cloudwatch_alarms: "CloudWatch alarms", cloudwatch_metrics: "CloudWatch metrics", cloudtrail: "CloudTrail" };
-  const failed = Object.entries(a.sources).filter(([, v]) => v !== "ok").map(([k]) => labels[k] || k);
-  if (!failed.length) return "";
-  return `<div class="notice warn" style="margin-top:16px">Partial evidence: ${esc(failed.join(", "))} could not be read.
-    Conclusions that depend on this data are omitted, and affected similarity factors are excluded from the score.</div>`;
+  const failed = Object.entries(a.sources).filter(([, v]) => v === "error").map(([k]) => labels[k] || k);
+  const missing = Object.entries(a.sources).filter(([, v]) => v === "not_captured").map(([k]) => labels[k] || k);
+  return (failed.length ? `<div class="notice warn" style="margin-top:16px">Partial evidence: ${esc(failed.join(", "))} could not be read.
+    Conclusions that depend on this data are omitted, and affected similarity factors are excluded from the score.</div>` : "")
+    + (missing.length ? `<div class="notice" style="margin-top:16px">Not captured for this incident: ${esc(missing.join(", "))}.
+    No cause is inferred from missing data, and affected similarity factors are excluded from the score.</div>` : "");
 }
 
 function heroHTML(m, matches, a) {
@@ -292,7 +314,7 @@ function heroHTML(m, matches, a) {
     const near = a.best_below_threshold;
     return `<section class="hero none" style="margin-top:16px">
       <h2>No sufficiently similar historical incident was found.</h2>
-      <div class="muted">Compared with ${a.compared_count} resolved incidents.${near ? ` Closest: ${esc(near.incident_id)} at ${near.score}%, below the 60% threshold.` : ""}</div>
+      <div class="muted">Compared with ${a.compared_count} earlier incidents.${near ? ` Closest: ${esc(near.incident_id)} at ${near.score}%, below the 60% threshold.` : ""}</div>
     </section>`;
   }
   const top = matches[0];
@@ -325,10 +347,12 @@ function lastTimeHTML(top) {
     <h3>What happened last time?</h3>
     ${next.length ? `<div class="next">After the same state, ${next.slice(0, 2).map((e) =>
       `${esc(e.description)}${e.token.startsWith("alarm:") ? " fired" : ""} <b>${e.minutes_after_state} min</b> after the ${esc(e.after_description)}`).join("; ")}.</div>` : ""}
-    ${row("Previous suspected cause", cause ? `${esc(cause.description)} <span class="faint small">(${esc(cause.confidence)})</span>` : "")}
-    ${row("Previous action", r ? esc(r.action) : "")}
-    ${row("Previous outcome", r ? esc(r.result) : "")}
-    ${row("Recovery time", r ? `${r.time_to_recovery_min} minutes after the alarm` : "")}
+    ${row("Previous suspected cause", cause ? `${esc(cause.description)} <span class="faint small">(${esc(cause.confidence)})</span>`
+      : "Insufficient evidence to identify a likely cause.")}
+    ${row("Previous action", r ? esc(r.action) : "No resolution recorded.")}
+    ${row("Previous outcome", r ? esc(r.result) : top.recovered_after_min != null ? `The alarm returned to OK on its own.` : "")}
+    ${row("Recovery time", r ? `${r.time_to_recovery_min} minutes after the alarm`
+      : top.recovered_after_min != null ? `${top.recovered_after_min} minutes after the alarm` : "")}
   </div>`;
 }
 
@@ -523,7 +547,7 @@ function shortToken(t) {
 function similarHTML(m, matches, a) {
   const x = pickExplanation(m);
   const omitted = Object.entries(a.omitted_factors || {});
-  const head = `<div class="section-head"><h2>Similar Incidents</h2><span class="small muted">Top ${matches.length || 0} of ${a.compared_count} resolved incidents · threshold 60%</span></div>`;
+  const head = `<div class="section-head"><h2>Similar Incidents</h2><span class="small muted">Top ${matches.length || 0} of ${a.compared_count} earlier incidents · threshold 60%</span></div>`;
   if (!matches.length) return head + `<p class="muted">No sufficiently similar historical incident was found.</p>`;
   return head + (omitted.length ? `<div class="notice warn" style="margin-bottom:10px">Factors excluded from the score: ${omitted.map(([k, v]) => `${esc(k)} (${esc(v)})`).join("; ")}. The score is normalized over the remaining factors.</div>` : "")
     + matches.map((s) => `<div class="match">
@@ -572,7 +596,7 @@ function evidenceHTML(m) {
   const ev = m.evidence || [];
   const a = m.analysis;
   const meta = a ? `<p class="small muted" style="margin:0 0 8px">Window ${esc(fmtDateTime(a.window.start))} – ${esc(fmtDateTime(a.window.end))} ·
-      Sources: ${Object.entries(a.sources).map(([k, v]) => `${esc(k.replace("_", " "))} ${v === "ok" ? "✓" : "✗ unavailable"}`).join(" · ")} ·
+      Sources: ${Object.entries(a.sources).map(([k, v]) => `${esc(k.replace("_", " "))} ${v === "ok" ? "✓" : v === "not_captured" ? "not captured" : "✗ unavailable"}`).join(" · ")} ·
       AI: ${esc({ DONE: "done", PENDING: "pending", UNAVAILABLE: "unavailable" }[a.ai_status] || a.ai_status)} ·
       analysis ${a.duration_ms} ms</p>` : "";
   return `<details ${isUnderAnalysis(m) ? "" : "open"}>

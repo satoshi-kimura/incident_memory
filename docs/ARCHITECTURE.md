@@ -24,6 +24,15 @@ It has no always-on compute: no EC2, ECS, RDS, OpenSearch or NAT Gateway.
 All resources are named `incident-memory-*`, tagged `Project=incident-memory`, and
 managed by a dedicated Terraform state (`s3://incident-memory-tfstate-<account>`).
 
+## Data sources
+
+| Source type | Where it comes from |
+|---|---|
+| `LIVE_DEMO` | Collected now from CloudWatch and CloudTrail for the isolated demo workload |
+| `CAPTURED_DEMO` | The same evidence, kept as a memory once the incident recovered and its window was complete |
+| `CAPTURED_REAL_WORLD` | Imported offline from a production system's exported CloudWatch alarm history and metric datapoints (`backend/scripts/import_real_world.py`), sanitized. One memory per ALARM → OK cycle. The public application never connects to the production system |
+| `SEEDED_DEMO` | Fictional incidents created for comparison |
+
 ## Public API
 
 | Route | Description |

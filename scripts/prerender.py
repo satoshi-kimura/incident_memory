@@ -19,7 +19,8 @@ from pathlib import Path
 
 INDEX = Path(__file__).resolve().parent.parent / "frontend" / "index.html"
 START, END = "<!-- PRERENDER:START -->", "<!-- PRERENDER:END -->"
-SOURCE = {"LIVE_DEMO": "Live demo", "CAPTURED_DEMO": "Captured demo", "SEEDED_DEMO": "Seeded demo (fictional)"}
+SOURCE = {"LIVE_DEMO": "Live demo", "CAPTURED_DEMO": "Captured demo", "SEEDED_DEMO": "Seeded demo (fictional)",
+          "CAPTURED_REAL_WORLD": "Captured real-world (sanitized)"}
 SHORT = {"Errors": "errors", "Duration": "latency", "ConcurrentExecutions": "concurrency", "Throttles": "throttling",
          "Invocations": "traffic", "DatabaseConnections": "DB connections", "FreeableMemory": "DB memory",
          "WriteThrottleEvents": "write throttling"}
@@ -63,7 +64,10 @@ def incident_item(x):
 
 def render(api):
     rows = get(api, "/api/incidents")["incidents"]
-    featured_row = next((r for r in rows if r["status"] != "RESOLVED" and r.get("best_match")), None)
+    featured_row = next((r for r in rows if r["status"] != "RESOLVED" and r.get("best_match")
+                         and r["source_type"] != "CAPTURED_REAL_WORLD"), None)
+    real_world = [r for r in rows if r["source_type"] == "CAPTURED_REAL_WORLD"]
+    recurrence_row = next((r for r in real_world if r.get("best_match")), None)
     e = escape
     parts = ['''<section class="intro">
       <h1>Have we seen this before?</h1>
@@ -115,9 +119,27 @@ def render(api):
       It is a historical comparison, not a prediction.</p>
     </section>''')
 
-    items = "".join(incident_item(x) for x in rows)
+    if recurrence_row:
+        m = get(api, f"/api/incidents/{recurrence_row['id']}")
+        top = m["analysis"]["similar"][0]
+        diff = "".join(f"<li>{e(d)}</li>" for d in top.get("differences", []))
+        parts.append(f'''<section class="panel">
+      <p class="muted">Exact recurrence in real production data (sanitized)</p>
+      <h2>{e(m['title'])}: {len(real_world)} ALARM → OK cycles of the same alarm</h2>
+      <p>{e(m['summary'])}</p>
+      <h3>Closest historical match: {top['score']}% similar to {e(top['incident_id'])}, the previous cycle</h3>
+      <p>Shared pattern: <b>{e(pattern(top.get('shared_sequence', [])))}</b>. What is different:</p><ul>{diff}</ul>
+      <p>What happened last time? Previous suspected cause: insufficient evidence to identify a likely cause.
+      Previous action: no resolution recorded. Previous outcome: the alarm returned to OK on its own after
+      {top.get('recovered_after_min')} minutes.</p>
+      <p><b>Evidence: CloudWatch alarm history and metric datapoints</b> (captured real-world, sanitized: names and
+      identifiers removed; no cause, change or action added).</p>
+    </section>''')
+
+    items = "".join(incident_item(x) for x in rows if x["source_type"] != "CAPTURED_REAL_WORLD")
     parts.append(f'''<section class="panel">
       <h2>Incident memory</h2><ul>{items}</ul>
+      {f"<p>Plus {len(real_world)} captured real-world cycles of one production database free-memory alarm.</p>" if real_world else ""}
     </section>
     <section class="panel">
       <h2>How it works</h2>

@@ -64,6 +64,7 @@ normalized over the remaining weights. The UI lists omitted factors with the rea
 | CloudWatch metric query failed | signals, sequence |
 | No significant metric change detected | signals |
 | CloudTrail query failed | preceding change |
+| CloudTrail history not captured (imported real-world data) | preceding change |
 | No resources identified | resource type |
 
 "No change was found" (a successful CloudTrail query with no results) is **not** an
@@ -71,12 +72,13 @@ omission. It is the value `none`.
 
 ## Matching rules
 
-- Only incidents with status `RESOLVED` are used as references (they have a known outcome).
+- References are incidents with a known outcome: `RESOLVED` (resolution recorded) or `RECOVERED` (alarms returned
+  to OK, no resolution recorded). Only incidents that **started before** the current one are compared.
+- Ties are broken in favour of the most recent earlier incident, which is "last time".
 - Matches below **60 %** are not shown as meaningful matches. The UI says
   *"No sufficiently similar historical incident was found."* and names the closest
   incident below the threshold.
 - At most the **top 3** matches are shown.
-- Ties are broken by incident ID so that results are stable.
 
 ## "What happened next"
 
@@ -112,3 +114,11 @@ ConcurrentExecutions ↑, the latency alarm, the errors alarm (3 minutes later),
 INC-0009 (DynamoDB capacity reduction → throttling → latency → alarm) scores 70 % as a different family of cause.
 Everything else is below 60 % and not shown. The UI renders the breakdown as **"Why 82% similar?"**, followed by
 **"What is different"** and **"What happened last time?"**.
+
+## Worked example: exact recurrence (captured real-world data)
+
+Cycle 27 of a production database free-memory alarm (2026-09-25 18:33 UTC) compared with cycle 26 (17:06 UTC):
+trigger 25/25, resource type 20/20, signals 25/25 (RDS FreeableMemory ↓), sequence 20/20 (FreeableMemory ↓ → alarm);
+the preceding-change factor is excluded because change history was not captured. Score: **100 %** of the
+available factors. The differences are listed separately and do not change the score: lowest free memory
+78.4 MiB vs 127.0 MiB, recovery after 863 min vs 2 min.

@@ -96,9 +96,17 @@ Data sources are labeled in the UI:
 |---|---|
 | **LIVE DEMO** | Collected now from CloudWatch and CloudTrail in the isolated AWS demo environment (while the incident's window is still open) |
 | **CAPTURED DEMO** | Collected earlier from a controlled incident in the isolated AWS demo environment and kept as a memory. A live incident becomes captured once it has recovered and its evidence window is complete |
+| **CAPTURED REAL-WORLD** | Imported from a production system's exported CloudWatch alarm history and metric datapoints, sanitized (names, account IDs, ARNs and identifiers removed). Facts only: no cause, change or action is added |
 | **SEEDED DEMO** | Fictional incident created for comparison. It did not occur in AWS |
 
-No incident comes from a real production system.
+### Two kinds of proof
+
+- **Pattern similarity across different causes (demo data):** the Lambda demo incident matches INC-0012 at 82 %
+  although the cause and the changed resource differ.
+- **Exact recurrence in real production data:** one production database free-memory alarm went through 27
+  ALARM → OK cycles between 2026-09-21 and 2026-09-26. Each cycle is its own memory and matches the previous cycle
+  (same metric, threshold and sequence); the UI also shows what differed (lowest value, recovery time). The cause is
+  shown as *Insufficient evidence* and the action as *No resolution recorded*, because the data contains neither.
 
 Incident status: **Open · alarm active** (still in ALARM), **Recovered · no resolution recorded**
 (alarms returned to OK, no action recorded), **Resolved** (resolution recorded; used for historical comparison).

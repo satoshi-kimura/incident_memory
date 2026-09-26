@@ -129,6 +129,11 @@ leaking into a timeline, over-confident AI wording). The builder decided when th
 - `CAPTURED_DEMO`: the same real evidence, kept as a memory once the incident recovered and its window was complete.
   The featured incident is shown with this label. Re-analysis compares the stored evidence again instead of
   re-collecting it, because 1-minute metrics expire after 15 days.
+- `CAPTURED_REAL_WORLD`: 27 ALARM → OK cycles of one production database free-memory alarm (2026-09-21 to
+  2026-09-26), imported from the operator's CloudWatch export and sanitized (no names, account IDs, ARNs or database
+  identifiers). Only recorded values and transitions are used: cause "Insufficient evidence", resolution "No resolution
+  recorded". They show **exact recurrence** in real data; the demo incidents show **pattern similarity across
+  different causes**.
 - `SEEDED_DEMO`: fictional historical incidents, clearly labeled, never presented as real production incidents.
 
 ## Checklist before submitting

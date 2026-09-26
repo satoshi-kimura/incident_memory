@@ -126,11 +126,12 @@ def analyze(incident_id):
         if existing:
             memory["created_at"] = existing.get("created_at", memory["created_at"])
         memory["analysis"]["evidence_final"] = evidence_is_final(memory, window_end)
-    if memory["analysis"]["evidence_final"]:
-        # Evidence was collected from the demo environment and is now kept as a memory.
+    if memory["analysis"]["evidence_final"] and memory.get("source_type") == "LIVE_DEMO":
+        # Live demo evidence that is now complete is kept as a captured memory. Other sources keep their label.
         memory["source_type"] = "CAPTURED_DEMO"
 
-    history = [m for m in store.list() if m["id"] != incident_id]
+    hidden = store.hidden_episodes()
+    history = [m for m in store.list() if m["id"] != incident_id and m["id"] not in hidden]
     sources = memory["analysis"]["sources"]
     similar = find_similar(memory, history, sources)
     memory["analysis"]["similar"] = similar["matches"]
@@ -417,5 +418,8 @@ def rule_based_explanation(memory, matches):
         "summary": summary,
         "suspected_causes": causes,
         "insufficient_evidence": not causes,
-        "insufficient_evidence_reason": "" if causes else "No change event clearly preceded the observed signals.",
+        "insufficient_evidence_reason": "" if causes else (
+            "Change history (CloudTrail) was not captured for this incident, and the metrics alone do not identify a cause."
+            if (memory.get("analysis") or {}).get("sources", {}).get("cloudtrail") == "not_captured"
+            else "No change event clearly preceded the observed signals."),
     }
