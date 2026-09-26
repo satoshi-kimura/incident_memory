@@ -25,59 +25,62 @@
   <main id="app">
     <!-- PRERENDER:START -->
     <section class="intro">
+      <span class="eyebrow">Operational memory for AWS incidents</span>
       <h1>When AWS fails, remember what worked last time.</h1>
       <p>Incident Memory reconstructs an alarm from CloudWatch and CloudTrail, compares it with past failures, and
       surfaces the previous cause, action, and recovery time.</p>
-      <p class="differentiator"><b>In this demo, real AWS evidence matches a different-cause incident at 82%:</b>
-      both follow configuration change → errors → latency → concurrency → alarm. The previous rollback recovered
-      the service in 14 minutes.</p>
     </section>
-    <section class="panel">
-      <p class="muted">Recent analyzed incident</p>
-      <h2>Orders API latency after Lambda configuration change</h2>
-      <p class="muted">INC-20260925-1750 · Captured demo · Started 2026-09-25 17:50 UTC ·
-      Trigger: incident-memory-demo-orders-api-latency-high (Lambda Duration)</p>
-      <p><b>Evidence: CloudWatch + CloudTrail</b> (real AWS evidence from the isolated demo environment)</p>
-      <h3>Closest historical match: 82% similar to INC-0012</h3>
-      <p>API degradation after database connection pool change. Previous incident: 2026-07-14 22:45 UTC, Seeded demo (fictional).</p>
-      <p><b>Pattern similarity:</b> different cause, similar failure pattern.
-      Shared pattern: <b>configuration change → errors → latency → concurrency → alarm</b></p>
-      <h3>Why 82% similar?</h3><ul><li><b>Trigger / alarm signature</b> 25/25: Same alarm: Lambda Duration (latency)</li><li><b>AWS service / resource type</b> 6.7/20: Shared: Lambda function; only in the historical incident: RDS database, SSM parameter</li><li><b>Observed signal overlap</b> 20/25: 3 of 3 current signals also seen: Lambda ConcurrentExecutions increased, Lambda Duration increased, Lambda Errors increased; only in the historical incident: RDS DatabaseConnections increased, RDS FreeableMemory decreased</li><li><b>Event sequence</b> 20/20: Same ordering of 5 of 5 events: configuration change → Lambda Errors increased → Lambda Duration increased → Lambda ConcurrentExecutions increased → Lambda Duration alarm</li><li><b>Preceding change</b> 10/10: Both preceded by a configuration change, but to a different resource (Lambda function here, SSM parameter in the historical incident)</li></ul>
-      <h3>What is different</h3><ul><li>Different change target: Lambda function configuration here vs database connection pool (SSM parameter) in INC-0012</li><li>INC-0012 also involved: RDS database, SSM parameter</li><li>Signals seen only in INC-0012: RDS DatabaseConnections increased, RDS FreeableMemory decreased</li><li>Peak Lambda Duration differs: 2,652 ms here vs 2,310 ms in INC-0012</li><li>Peak Lambda ConcurrentExecutions differs: 3 here vs 4 in INC-0012</li><li>Peak Lambda Errors differs: 5 here vs 38 in INC-0012</li><li>Recovery took 10 min here vs 14 min in INC-0012</li></ul>
-      <h3>What happened last time?</h3>
-      <ul>
-        <li>After the same state, Lambda Errors alarm fired 3 min after the Lambda Duration alarm.</li>
-        <li>Previous suspected cause: The larger connection pool let every Lambda execution environment open more database connections; connection count and memory use on the database rose, queries slowed and some connections were refused. (HIGH)</li>
-        <li>Previous action: Reverted /orders-api/db/pool-max to 20 and redeployed the function.</li>
-        <li>Previous outcome: Connections, memory, latency and errors returned to baseline; both alarms returned to OK.</li>
-        <li>Recovery time: 14 minutes after the alarm</li>
-      </ul>
-      <h3>Incident summary (Amazon Bedrock, grounded in the evidence below)</h3><p>The Lambda function incident-memory-demo-orders-api experienced a latency spike (1,399 ms vs. 1,000 ms threshold) at 2026-09-25T17:50:48Z. Preceding this, Errors rose to 5 from zero at 2026-09-25T17:43:00Z, Duration jumped to 2,652 ms from 87 ms at 2026-09-25T17:46:00Z, and ConcurrentExecutions rose to 3 from 1 at 2026-09-25T17:47:00Z. The alarm returned to OK by 2026-09-25T18:00:48Z. Historical incident INC-0012 showed similar latency and concurrency signals after a configuration change.</p>
-      <h3>Timeline (evidence: CloudWatch + CloudTrail)</h3><ul><li><code>17:29</code> UpdateFunctionConfiguration on incident-memory-demo-orders-api (configuration change) <code>CT-001</code> <span class="faint">(CloudTrail)</span></li><li><code>17:41</code> UpdateFunctionConfiguration on incident-memory-demo-orders-api (configuration change) <code>CT-002</code> <span class="faint">(CloudTrail)</span></li><li><code>17:43</code> Errors increased from 0 to 5 (up from zero) <code>CW-001</code> <span class="faint">(CloudWatch)</span></li><li><code>17:46</code> Duration increased from 87 ms to 2,652 ms (30.6x baseline) <code>CW-002</code> <span class="faint">(CloudWatch)</span></li><li><code>17:47</code> ConcurrentExecutions increased from 1 to 3 (3.0x baseline) <code>CW-003</code> <span class="faint">(CloudWatch)</span></li><li><code>17:50</code> Alarm incident-memory-demo-orders-api-latency-high entered ALARM (Duration 1,399 ms, threshold 1,000 ms) <code>CW-004</code> <span class="faint">(CloudWatch)</span></li><li><code>18:00</code> Alarm incident-memory-demo-orders-api-latency-high returned to OK <code>CW-005</code> <span class="faint">(CloudWatch)</span></li></ul>
-      <p class="small faint">The similarity score is calculated from five documented factors by the application, not by AI.
-      It is a historical comparison, not a prediction.</p>
+    <section class="featured-card">
+      <div class="featured-copy">
+        <div class="row"><span class="eyebrow">Recent analyzed incident · Featured analysis</span><span class="badge">Captured demo</span></div>
+        <h2>Orders API latency after Lambda configuration change</h2>
+        <p class="muted"><b>Evidence: CloudWatch + CloudTrail</b> · real AWS evidence from the isolated demo environment</p>
+        <span class="eyebrow">Closest historical match</span>
+        <div class="match-callout" aria-label="82% similar to INC-0012"><span class="match-number">82%</span><span><b>similar to INC-0012</b><small>Different cause, similar failure pattern</small></span></div>
+        <div class="pattern-line"><b>Pattern similarity:</b> different cause · <b>Shared pattern:</b> configuration change → errors → latency → concurrency → alarm</div>
+        <details class="hero-details"><summary>Why 82% similar, what differs, and what happened last time</summary>
+          <div class="hero-details-body">
+            <h3>Why 82% similar?</h3><ul><li><b>Trigger / alarm signature</b> 25/25: Same alarm: Lambda Duration (latency)</li><li><b>AWS service / resource type</b> 6.7/20: Shared: Lambda function; only in the historical incident: RDS database, SSM parameter</li><li><b>Observed signal overlap</b> 20/25: 3 of 3 current signals also seen: Lambda ConcurrentExecutions increased, Lambda Duration increased, Lambda Errors increased; only in the historical incident: RDS DatabaseConnections increased, RDS FreeableMemory decreased</li><li><b>Event sequence</b> 20/20: Same ordering of 5 of 5 events: configuration change → Lambda Errors increased → Lambda Duration increased → Lambda ConcurrentExecutions increased → Lambda Duration alarm</li><li><b>Preceding change</b> 10/10: Both preceded by a configuration change, but to a different resource (Lambda function here, SSM parameter in the historical incident)</li></ul>
+            <h3>What is different</h3><ul><li>Different change target: Lambda function configuration here vs database connection pool (SSM parameter) in INC-0012</li><li>INC-0012 also involved: RDS database, SSM parameter</li><li>Signals seen only in INC-0012: RDS DatabaseConnections increased, RDS FreeableMemory decreased</li><li>Peak Lambda Duration differs: 2,652 ms here vs 2,310 ms in INC-0012</li><li>Peak Lambda ConcurrentExecutions differs: 3 here vs 4 in INC-0012</li><li>Peak Lambda Errors differs: 5 here vs 38 in INC-0012</li><li>Recovery took 10 min here vs 14 min in INC-0012</li></ul>
+            <h3>What happened last time?</h3><ul>
+              <li>After the same state, Lambda Errors alarm fired 3 min after the Lambda Duration alarm.</li>
+              <li>Previous suspected cause: The larger connection pool let every Lambda execution environment open more database connections; connection count and memory use on the database rose, queries slowed and some connections were refused. (HIGH)</li>
+              <li>Previous action: Reverted /orders-api/db/pool-max to 20 and redeployed the function.</li>
+              <li>Previous outcome: Connections, memory, latency and errors returned to baseline; both alarms returned to OK.</li>
+              <li>Recovery time: 14 minutes after the alarm</li>
+            </ul>
+            <h3>Incident summary (Amazon Bedrock, grounded in the evidence below)</h3><p>The Lambda function incident-memory-demo-orders-api experienced a latency spike (1,399 ms vs. 1,000 ms threshold) at 2026-09-25T17:50:48Z. Preceding this, Errors rose to 5 from zero at 2026-09-25T17:43:00Z, Duration jumped to 2,652 ms from 87 ms at 2026-09-25T17:46:00Z, and ConcurrentExecutions rose to 3 from 1 at 2026-09-25T17:47:00Z. The alarm returned to OK by 2026-09-25T18:00:48Z. Historical incident INC-0012 showed similar latency and concurrency signals after a configuration change.</p>
+            <h3>Timeline (evidence: CloudWatch + CloudTrail)</h3><ul><li><code>17:29</code> UpdateFunctionConfiguration on incident-memory-demo-orders-api (configuration change) <code>CT-001</code> <span class="faint">(CloudTrail)</span></li><li><code>17:41</code> UpdateFunctionConfiguration on incident-memory-demo-orders-api (configuration change) <code>CT-002</code> <span class="faint">(CloudTrail)</span></li><li><code>17:43</code> Errors increased from 0 to 5 (up from zero) <code>CW-001</code> <span class="faint">(CloudWatch)</span></li><li><code>17:46</code> Duration increased from 87 ms to 2,652 ms (30.6x baseline) <code>CW-002</code> <span class="faint">(CloudWatch)</span></li><li><code>17:47</code> ConcurrentExecutions increased from 1 to 3 (3.0x baseline) <code>CW-003</code> <span class="faint">(CloudWatch)</span></li><li><code>17:50</code> Alarm incident-memory-demo-orders-api-latency-high entered ALARM (Duration 1,399 ms, threshold 1,000 ms) <code>CW-004</code> <span class="faint">(CloudWatch)</span></li><li><code>18:00</code> Alarm incident-memory-demo-orders-api-latency-high returned to OK <code>CW-005</code> <span class="faint">(CloudWatch)</span></li></ul>
+          </div>
+        </details>
+      </div>
+      <div class="featured-action">
+        <div class="mini-facts"><span><b>Explainable</b> five-factor score</span><span><b>Grounded</b> evidence IDs</span><span><b>Actionable</b> previous outcome</span></div>
+        <a class="btn primary" href="#/incidents/INC-20260925-1750">View featured analysis →</a>
+        <span class="small faint mono">INC-20260925-1750</span>
+      </div>
     </section>
-    <section class="panel">
-      <p class="muted">Captured real-world recurrences (sanitized production data)</p>
-      <h2>The same production alarm recurred 27 times in 5 days.</h2>
-      <p>Real production data shows the same operational failure (database free memory below its alarm threshold)
-      recurring. Each occurrence is stored as a separate Incident Memory and compared with previous occurrences.
-      Repeated incidents should become reusable operational memory, not repeated investigation work.</p>
-      <h3>Latest occurrence: EXACT RECURRENCE of INC-20260925-1706,
-      the previous occurrence (1h 27m earlier)</h3>
-      <p>Recurrence score: 100%. Reasons:</p><ul><li>Same alarm type: RDS FreeableMemory (LessThanThreshold)</li><li>Same metric: FreeableMemory</li><li>Same threshold behavior: below 128.0 MiB</li><li>Same ALARM → OK recovery pattern: returned to OK with no recorded action</li></ul>
-      <p>What differed this time:</p><ul><li>Lowest RDS FreeableMemory differs: 78.4 MiB here vs 127.0 MiB in INC-20260925-1706</li><li>Recovery took 863 min here vs 2 min in INC-20260925-1706</li></ul>
-      <p>Outcome: recovered automatically. No resolution recorded. Cause: insufficient evidence.</p>
-      <p><b>Evidence: CloudWatch alarm history and metric datapoints</b> (captured real-world, sanitized: names and
-      identifiers removed; no cause, change or action added).</p>
+    <section class="panel proof-panel">
+      <div class="section-head"><div><span class="eyebrow">Captured real-world data · sanitized</span><h2>The same production alarm recurred 27 times.</h2></div><span class="badge">Exact recurrence</span></div>
+      <div class="proof-stats"><div><strong>27</strong><span>ALARM → OK cycles</span></div><div><strong>5 days</strong><span>observed window</span></div><div><strong>Evidence only</strong><span>no invented cause or fix</span></div></div>
+      <p class="muted">The same database free-memory failure returned repeatedly. Each occurrence is kept as a separate memory and compared with the previous one.</p>
+      <details class="nested-disclosure"><summary>Latest exact recurrence and full evidence</summary><div class="disclosure-body">
+        <h3>Latest occurrence: EXACT RECURRENCE of INC-20260925-1706, the previous occurrence (1h 27m earlier)</h3>
+        <p>Recurrence score: 100%. Reasons:</p><ul><li>Same alarm type: RDS FreeableMemory (LessThanThreshold)</li><li>Same metric: FreeableMemory</li><li>Same threshold behavior: below 128.0 MiB</li><li>Same ALARM → OK recovery pattern: returned to OK with no recorded action</li></ul>
+        <p>What differed this time:</p><ul><li>Lowest RDS FreeableMemory differs: 78.4 MiB here vs 127.0 MiB in INC-20260925-1706</li><li>Recovery took 863 min here vs 2 min in INC-20260925-1706</li></ul>
+        <p>Outcome: recovered automatically. No resolution recorded. Cause: insufficient evidence.</p>
+        <p><b>Evidence: CloudWatch alarm history and metric datapoints</b> (names and identifiers removed; no cause, change or action added).</p>
+      </div></details>
     </section>
-    <section class="panel">
-      <h2>Incident memory</h2><ul><li><code>INC-20260925-1750</code> Orders API latency after Lambda configuration change · Captured demo · Started 2026-09-25 17:50 UTC · closest match 82% INC-0012</li><li><code>INC-0015</code> Throttling after reserved concurrency change · Seeded demo (fictional) · Started 2026-08-05 11:18 UTC</li><li><code>INC-0012</code> API degradation after database connection pool change · Seeded demo (fictional) · Started 2026-07-14 22:45 UTC</li><li><code>INC-0010</code> Errors after code deployment — missing environment variable · Seeded demo (fictional) · Started 2026-06-24 16:04 UTC</li><li><code>INC-0009</code> Orders API latency after DynamoDB capacity reduction · Seeded demo (fictional) · Started 2026-06-11 09:25 UTC</li><li><code>INC-0007</code> Throttling during campaign traffic spike · Seeded demo (fictional) · Started 2026-05-02 13:09 UTC</li></ul>
-      <p>Plus 27 captured real-world cycles of one production database free-memory alarm.</p>
-    </section>
-    <section class="panel">
-      <h2>How it works</h2>
-      <ul>
+    <details class="panel disclosure">
+      <summary><span><b>Browse incident memory</b><small>Historical incidents and captured real-world cycles</small></span></summary>
+      <div class="disclosure-body"><ul><li><code>INC-20260925-1750</code> Orders API latency after Lambda configuration change · Captured demo · Started 2026-09-25 17:50 UTC · closest match 82% INC-0012</li><li><code>INC-0015</code> Throttling after reserved concurrency change · Seeded demo (fictional) · Started 2026-08-05 11:18 UTC</li><li><code>INC-0012</code> API degradation after database connection pool change · Seeded demo (fictional) · Started 2026-07-14 22:45 UTC</li><li><code>INC-0010</code> Errors after code deployment — missing environment variable · Seeded demo (fictional) · Started 2026-06-24 16:04 UTC</li><li><code>INC-0009</code> Orders API latency after DynamoDB capacity reduction · Seeded demo (fictional) · Started 2026-06-11 09:25 UTC</li><li><code>INC-0007</code> Throttling during campaign traffic spike · Seeded demo (fictional) · Started 2026-05-02 13:09 UTC</li></ul>
+        <p>Plus 27 captured real-world cycles of one production database free-memory alarm.</p>
+      </div>
+    </details>
+    <details class="panel disclosure">
+      <summary><span><b>How it works</b><small>AWS architecture, deterministic scoring, and grounded AI</small></span></summary>
+      <div class="disclosure-body"><ul>
         <li>Collects bounded evidence from Amazon CloudWatch (alarms, metrics) and AWS CloudTrail (configuration changes)
             for an allowlisted demo workload. AWS workload access is read-only.</li>
         <li>Stores each incident as a structured memory in Amazon DynamoDB: trigger, timeline, signals, changes,
@@ -86,9 +89,10 @@
             event sequence 20, preceding change 10.</li>
         <li>Amazon Bedrock explains the evidence; every suspected cause must cite evidence IDs.</li>
       </ul>
-      <p class="small faint">Prerendered from the live API at 2026-09-26 12:29 UTC
+      <p class="small faint">Prerendered from the live API at 2026-09-26 14:58 UTC
       so the page is readable without JavaScript. The interactive app replaces this content in the browser.</p>
-    </section>
+      </div>
+    </details>
     <!-- PRERENDER:END -->
   </main>
   <footer>

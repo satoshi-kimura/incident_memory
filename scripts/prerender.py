@@ -71,12 +71,10 @@ def render(api):
     recurrence_row = next((r for r in real_world if r.get("best_match")), None)
     e = escape
     parts = ['''<section class="intro">
+      <span class="eyebrow">Operational memory for AWS incidents</span>
       <h1>When AWS fails, remember what worked last time.</h1>
       <p>Incident Memory reconstructs an alarm from CloudWatch and CloudTrail, compares it with past failures, and
       surfaces the previous cause, action, and recovery time.</p>
-      <p class="differentiator"><b>In this demo, real AWS evidence matches a different-cause incident at 82%:</b>
-      both follow configuration change → errors → latency → concurrency → alarm. The previous rollback recovered
-      the service in 14 minutes.</p>
     </section>''']
 
     if featured_row:
@@ -95,30 +93,35 @@ def render(api):
         diff = "".join(f"<li>{e(d)}</li>" for d in top.get("differences", []))
         timeline = "".join(timeline_item(x) for x in m["timeline"])
         ai = (a.get("ai") or {}).get("summary") if a.get("ai_status") == "DONE" else None
-        parts.append(f'''<section class="panel">
-      <p class="muted">Recent analyzed incident</p>
-      <h2>{e(m['title'])}</h2>
-      <p class="muted">{e(m['id'])} · {e(SOURCE.get(m['source_type'], m['source_type']))} · Started {e(dt(m['started_at']))} ·
-      Trigger: {e(t.get('alarm_name', ''))} ({e(t.get('service', ''))} {e(t.get('metric', ''))})</p>
-      <p><b>Evidence: CloudWatch + CloudTrail</b> (real AWS evidence from the isolated demo environment)</p>
-      <h3>Closest historical match: {top['score']}% similar to {e(top['incident_id'])}</h3>
-      <p>{e(top['title'])}. Previous incident: {e(dt(top.get('started_at')))}, {e(SOURCE.get(top.get('source_type'), ''))}.</p>
-      <p><b>Pattern similarity:</b> different cause, similar failure pattern.
-      Shared pattern: <b>{e(pattern(top.get('shared_sequence', [])))}</b></p>
-      <h3>Why {top['score']}% similar?</h3><ul>{why}</ul>
-      <h3>What is different</h3><ul>{diff}</ul>
-      <h3>What happened last time?</h3>
-      <ul>
-        {f"<li>After the same state, {e(nxt)}.</li>" if nxt else ""}
-        {f"<li>Previous suspected cause: {e(cause['description'])} ({e(cause['confidence'])})</li>" if cause else ""}
-        {f"<li>Previous action: {e(r['action'])}</li>" if r else ""}
-        {f"<li>Previous outcome: {e(r['result'])}</li>" if r else ""}
-        {f"<li>Recovery time: {r['time_to_recovery_min']} minutes after the alarm</li>" if r else ""}
-      </ul>
-      {f"<h3>Incident summary (Amazon Bedrock, grounded in the evidence below)</h3><p>{e(ai)}</p>" if ai else ""}
-      <h3>Timeline (evidence: CloudWatch + CloudTrail)</h3><ul>{timeline}</ul>
-      <p class="small faint">The similarity score is calculated from five documented factors by the application, not by AI.
-      It is a historical comparison, not a prediction.</p>
+        parts.append(f'''<section class="featured-card">
+      <div class="featured-copy">
+        <div class="row"><span class="eyebrow">Recent analyzed incident · Featured analysis</span><span class="badge">{e(SOURCE.get(m['source_type'], m['source_type']))}</span></div>
+        <h2>{e(m['title'])}</h2>
+        <p class="muted"><b>Evidence: CloudWatch + CloudTrail</b> · real AWS evidence from the isolated demo environment</p>
+        <span class="eyebrow">Closest historical match</span>
+        <div class="match-callout" aria-label="{top['score']}% similar to {e(top['incident_id'])}"><span class="match-number">{top['score']}%</span><span><b>similar to {e(top['incident_id'])}</b><small>Different cause, similar failure pattern</small></span></div>
+        <div class="pattern-line"><b>Pattern similarity:</b> different cause · <b>Shared pattern:</b> {e(pattern(top.get('shared_sequence', [])))}</div>
+        <details class="hero-details"><summary>Why {top['score']}% similar, what differs, and what happened last time</summary>
+          <div class="hero-details-body">
+            <h3>Why {top['score']}% similar?</h3><ul>{why}</ul>
+            <h3>What is different</h3><ul>{diff}</ul>
+            <h3>What happened last time?</h3><ul>
+              {f"<li>After the same state, {e(nxt)}.</li>" if nxt else ""}
+              {f"<li>Previous suspected cause: {e(cause['description'])} ({e(cause['confidence'])})</li>" if cause else ""}
+              {f"<li>Previous action: {e(r['action'])}</li>" if r else ""}
+              {f"<li>Previous outcome: {e(r['result'])}</li>" if r else ""}
+              {f"<li>Recovery time: {r['time_to_recovery_min']} minutes after the alarm</li>" if r else ""}
+            </ul>
+            {f"<h3>Incident summary (Amazon Bedrock, grounded in the evidence below)</h3><p>{e(ai)}</p>" if ai else ""}
+            <h3>Timeline (evidence: CloudWatch + CloudTrail)</h3><ul>{timeline}</ul>
+          </div>
+        </details>
+      </div>
+      <div class="featured-action">
+        <div class="mini-facts"><span><b>Explainable</b> five-factor score</span><span><b>Grounded</b> evidence IDs</span><span><b>Actionable</b> previous outcome</span></div>
+        <a class="btn primary" href="#/incidents/{e(m['id'])}">View featured analysis →</a>
+        <span class="small faint mono">{e(m['id'])}</span>
+      </div>
     </section>''')
 
     if recurrence_row:
@@ -133,29 +136,29 @@ def render(api):
         diff = "".join(f"<li>{e(d)}</li>" for d in top.get("differences", []))
         gap = top.get("minutes_earlier")
         gap_txt = f"{gap // 60}h {gap % 60}m earlier" if gap is not None else ""
-        parts.append(f'''<section class="panel">
-      <p class="muted">Captured real-world recurrences (sanitized production data)</p>
-      <h2>The same production alarm recurred {len(real_world)} times in {days} days.</h2>
-      <p>Real production data shows the same operational failure (database free memory below its alarm threshold)
-      recurring. Each occurrence is stored as a separate Incident Memory and compared with previous occurrences.
-      Repeated incidents should become reusable operational memory, not repeated investigation work.</p>
-      <h3>Latest occurrence: {"EXACT RECURRENCE" if exact else f"{top['score']}% similar"} of {e(top['incident_id'])},
-      the previous occurrence ({e(gap_txt)})</h3>
-      {f"<p>Recurrence score: {top['score']}%. Reasons:</p><ul>{reasons}</ul>" if exact else ""}
-      <p>What differed this time:</p><ul>{diff}</ul>
-      <p>Outcome: recovered automatically. No resolution recorded. Cause: insufficient evidence.</p>
-      <p><b>Evidence: CloudWatch alarm history and metric datapoints</b> (captured real-world, sanitized: names and
-      identifiers removed; no cause, change or action added).</p>
+        parts.append(f'''<section class="panel proof-panel">
+      <div class="section-head"><div><span class="eyebrow">Captured real-world data · sanitized</span><h2>The same production alarm recurred {len(real_world)} times.</h2></div><span class="badge">Exact recurrence</span></div>
+      <div class="proof-stats"><div><strong>{len(real_world)}</strong><span>ALARM → OK cycles</span></div><div><strong>{days} days</strong><span>observed window</span></div><div><strong>Evidence only</strong><span>no invented cause or fix</span></div></div>
+      <p class="muted">The same database free-memory failure returned repeatedly. Each occurrence is kept as a separate memory and compared with the previous one.</p>
+      <details class="nested-disclosure"><summary>Latest exact recurrence and full evidence</summary><div class="disclosure-body">
+        <h3>Latest occurrence: {"EXACT RECURRENCE" if exact else f"{top['score']}% similar"} of {e(top['incident_id'])}, the previous occurrence ({e(gap_txt)})</h3>
+        {f"<p>Recurrence score: {top['score']}%. Reasons:</p><ul>{reasons}</ul>" if exact else ""}
+        <p>What differed this time:</p><ul>{diff}</ul>
+        <p>Outcome: recovered automatically. No resolution recorded. Cause: insufficient evidence.</p>
+        <p><b>Evidence: CloudWatch alarm history and metric datapoints</b> (names and identifiers removed; no cause, change or action added).</p>
+      </div></details>
     </section>''')
 
     items = "".join(incident_item(x) for x in rows if x["source_type"] != "CAPTURED_REAL_WORLD")
-    parts.append(f'''<section class="panel">
-      <h2>Incident memory</h2><ul>{items}</ul>
-      {f"<p>Plus {len(real_world)} captured real-world cycles of one production database free-memory alarm.</p>" if real_world else ""}
-    </section>
-    <section class="panel">
-      <h2>How it works</h2>
-      <ul>
+    parts.append(f'''<details class="panel disclosure">
+      <summary><span><b>Browse incident memory</b><small>Historical incidents and captured real-world cycles</small></span></summary>
+      <div class="disclosure-body"><ul>{items}</ul>
+        {f"<p>Plus {len(real_world)} captured real-world cycles of one production database free-memory alarm.</p>" if real_world else ""}
+      </div>
+    </details>
+    <details class="panel disclosure">
+      <summary><span><b>How it works</b><small>AWS architecture, deterministic scoring, and grounded AI</small></span></summary>
+      <div class="disclosure-body"><ul>
         <li>Collects bounded evidence from Amazon CloudWatch (alarms, metrics) and AWS CloudTrail (configuration changes)
             for an allowlisted demo workload. AWS workload access is read-only.</li>
         <li>Stores each incident as a structured memory in Amazon DynamoDB: trigger, timeline, signals, changes,
@@ -166,7 +169,8 @@ def render(api):
       </ul>
       <p class="small faint">Prerendered from the live API at {datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M")} UTC
       so the page is readable without JavaScript. The interactive app replaces this content in the browser.</p>
-    </section>''')
+      </div>
+    </details>''')
     return "\n    ".join(parts)
 
 

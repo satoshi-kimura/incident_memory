@@ -104,54 +104,71 @@ async function renderDashboard() {
   const realWorld = rows.filter((r) => r.source_type === "CAPTURED_REAL_WORLD");
   const live = rows.filter((r) => isUnderAnalysis(r) && r.source_type !== "CAPTURED_REAL_WORLD");
   const history = rows.filter((r) => !isUnderAnalysis(r));
+  const featured = live[0];
 
   app.innerHTML = `
     <section class="intro">
+      <span class="eyebrow">Operational memory for AWS incidents</span>
       <h1>When AWS fails, remember what worked last time.</h1>
       <p>Incident Memory reconstructs an alarm from CloudWatch and CloudTrail, compares it with past failures, and
       surfaces the previous cause, action, and recovery time.</p>
-      <p class="differentiator"><b>In this demo, real AWS evidence matches a different-cause incident at 82%:</b>
-      both follow configuration change → errors → latency → concurrency → alarm. The previous rollback recovered
-      the service in 14 minutes.</p>
     </section>
     ${(data.warnings || []).map((w) => `<div class="notice warn" style="margin-bottom:12px">${esc(w)}</div>`).join("")}
-    <section class="panel">
+    ${featured ? featuredIncidentCard(featured) : `<section class="panel empty-state"><h2>No recent demo incident</h2><p class="muted">Historical memories remain available below.</p></section>`}
+    ${live.length > 1 ? `<details class="panel disclosure"><summary><span><b>More recent demo incidents</b><small>${live.length - 1} additional incidents</small></span></summary><div class="disclosure-body">${incidentTable(live.slice(1))}</div></details>` : ""}
+    ${realWorld.length ? `<section class="panel proof-panel">
       <div class="section-head">
-        <h2>Recent analyzed incidents</h2>
-        <span class="small muted">Recent AWS demo incidents · real CloudWatch and CloudTrail evidence</span>
+        <div><span class="eyebrow">Captured real-world data · sanitized</span><h2>The same production alarm recurred ${realWorld.length} times.</h2></div>
+        <span class="badge">Exact recurrence</span>
       </div>
-      ${live.length ? incidentTable(live) : `<p class="muted">No recent demo incident. Historical memories are listed below.</p>`}
-    </section>
-    ${realWorld.length ? `<section class="panel">
-      <div class="section-head">
-        <h2>Captured real-world recurrences</h2>
-        <span class="small muted">Exact recurrence in real production data · sanitized</span>
+      <div class="proof-stats">
+        <div><strong>${realWorld.length}</strong><span>ALARM → OK cycles</span></div>
+        <div><strong>${recurrenceDays(realWorld)} days</strong><span>observed window</span></div>
+        <div><strong>Evidence only</strong><span>no invented cause or fix</span></div>
       </div>
-      <p style="margin:0 0 4px"><b>The same production alarm recurred ${realWorld.length} times in ${recurrenceDays(realWorld)} days.</b>
-      Real production data shows one operational failure (database free memory below its alarm threshold) returning again and again.</p>
-      <p class="small muted" style="margin:0 0 10px">The alarm went through ${realWorld.length} ALARM → OK cycles between
-      ${esc(realWorld[realWorld.length - 1].started_at.slice(0, 10))} and ${esc((realWorld[0].ended_at || realWorld[0].started_at).slice(0, 10))}.
-      Each occurrence is stored as a separate Incident Memory and compared with previous occurrences.
-      Repeated incidents should become reusable operational memory, not repeated investigation work.
-      Demo incidents above show <b>pattern similarity across different causes</b>; these show <b>exact recurrence</b>.</p>
-      ${incidentTable(realWorld.slice(0, 5), true)}
-      ${realWorld.length > 5 ? `<details><summary class="small">Show all ${realWorld.length} cycles</summary>${incidentTable(realWorld.slice(5), true)}</details>` : ""}
+      <p class="muted">The same database free-memory failure returned repeatedly. Each occurrence is kept as a separate memory and compared with the previous one.</p>
+      <details class="nested-disclosure"><summary>Browse all ${realWorld.length} captured cycles</summary><div class="disclosure-body">${incidentTable(realWorld, true)}</div></details>
     </section>` : ""}
-    <section class="panel">
-      <div class="section-head">
-        <h2>Incident memory</h2>
-        <span class="small muted">Resolved demo incidents used for historical comparison</span>
-      </div>
-      ${incidentTable(history)}
-      <ul class="legend-list">
+    <details class="panel disclosure">
+      <summary><span><b>Browse incident memory</b><small>${history.length} historical demo incidents used for comparison</small></span></summary>
+      <div class="disclosure-body">${incidentTable(history)}</div>
+    </details>
+    <details class="panel disclosure">
+      <summary><span><b>Data labels</b><small>What live, captured, real-world, and seeded mean</small></span></summary>
+      <div class="disclosure-body"><ul class="legend-list">
         ${Object.entries(SOURCE_LABELS).map(([k, [label, desc]]) => `<li><b>${esc(label)}</b> — ${esc(desc)}</li>`).join("")}
-      </ul>
-    </section>`;
+      </ul></div>
+    </details>`;
   app.querySelectorAll("tr[data-id]").forEach((tr) =>
     tr.addEventListener("click", (ev) => {
       if (ev.target.closest("a")) return;
       location.hash = `#/incidents/${tr.dataset.id}`;
     }));
+}
+
+function featuredIncidentCard(r) {
+  const b = r.best_match;
+  return `<section class="featured-card">
+    <div class="featured-copy">
+      <div class="row"><span class="eyebrow">Recent analyzed incident · Featured analysis</span>${statusBadge(r.status)}${sourceBadge(r.source_type)}</div>
+      <h2>${esc(r.title)}</h2>
+      <p class="muted">Real CloudWatch and CloudTrail evidence from the isolated AWS demo environment.</p>
+      ${b ? `<span class="eyebrow">Closest historical match</span><div class="match-callout" aria-label="${b.score}% similar to ${esc(b.id)}">
+        <span class="match-number">${b.score}%</span>
+        <span><b>similar to ${esc(b.id)}</b><small>Different cause, similar failure pattern</small></span>
+      </div>
+      ${b.shared_sequence?.length ? `<div class="pattern-line"><b>Pattern similarity:</b> different cause · <b>Shared pattern:</b> ${esc(sharedPattern(b.shared_sequence, 6, true))}</div>` : ""}` : `<p class="muted">No historical match has been calculated yet.</p>`}
+    </div>
+    <div class="featured-action">
+      <div class="mini-facts">
+        <span><b>Explainable</b> five-factor score</span>
+        <span><b>Grounded</b> evidence IDs</span>
+        <span><b>Actionable</b> previous outcome</span>
+      </div>
+      <a class="btn primary" href="#/incidents/${esc(r.id)}">View featured analysis <span aria-hidden="true">→</span></a>
+      <span class="small faint mono">${esc(r.id)}</span>
+    </div>
+  </section>`;
 }
 
 const isExact = (match) => match && match.match_type === "exact_recurrence";
@@ -219,6 +236,10 @@ async function renderIncident(id, preloaded) {
   document.title = `${m.id} · Incident Memory`;
   const a = m.analysis;
   const isLive = isUnderAnalysis(m);
+  const primary = isLive && a ? `${sourcesNotice(a)}${heroHTML(m, a.similar || [], a)}` : "";
+  const context = a
+    ? disclosurePanel("Incident context", "Trigger, analysis window, and re-run controls", `${triggerPanel(m)}${isLive ? analyzeBar(m) : ""}`)
+    : `${triggerPanel(m)}${isLive ? analyzeBar(m) : ""}`;
 
   app.innerHTML = `
     <a class="crumb" href="#/">← All incidents</a>
@@ -237,9 +258,9 @@ async function renderIncident(id, preloaded) {
       metric values and alarm transitions are shown. No cause, change or action is added.</div>` : ""}
     ${m.source_type === "SEEDED_DEMO" ? `<div class="notice" style="margin-bottom:16px"><b>Seeded demo data.</b>
       This is a fictional incident created for comparison. It did not occur in AWS, and its evidence is illustrative.</div>` : ""}
-    ${triggerPanel(m)}
-    ${isLive ? analyzeBar(m) : ""}
-    <div id="results">${isLive && !a ? "" : resultsHTML(m)}</div>`;
+    ${primary}
+    ${context}
+    <div id="results">${isLive && !a ? "" : resultsHTML(m, Boolean(primary))}</div>`;
 
   bindCommon(m);
   const btn = document.getElementById("analyze-btn");
@@ -309,28 +330,37 @@ function pollAI(id, attempt) {
 
 // ------------------------------------------------------------------ results
 
-function resultsHTML(m) {
+function resultsHTML(m, primaryRendered = false) {
   const a = m.analysis;
   const isLive = isUnderAnalysis(m);
   const matches = a?.similar || [];
   const explanation = pickExplanation(m);
+  const investigation = `<div class="grid-2 detail-grid">
+      <section class="subsection">${timelineHTML(m)}</section>
+      <section class="subsection">${causesHTML(m, explanation)}</section>
+    </div>
+    <section class="subsection">${signalsHTML(m)}</section>`;
+  const comparison = isLive ? `${matches[0] ? compareChartPanel(m, matches[0]) : ""}
+    <section class="subsection">${similarHTML(m, matches, a)}</section>` : "";
   return `
-    ${isLive ? sourcesNotice(a) : ""}
-    ${isLive ? heroHTML(m, matches, a) : ""}
-    <section class="panel">
+    ${isLive && !primaryRendered ? sourcesNotice(a) : ""}
+    ${isLive && !primaryRendered ? heroHTML(m, matches, a) : ""}
+    <section class="panel summary-panel">
       <div class="section-head"><h2>Incident Summary</h2>${explanation.badge}</div>
       <p style="margin:0">${esc(explanation.summary || "No summary available.")}</p>
       ${explanation.note ? `<p class="small muted" style="margin:8px 0 0">${esc(explanation.note)}</p>` : ""}
     </section>
-    ${isLive && matches[0] ? compareChartPanel(m, matches[0]) : ""}
-    <div class="grid-2 section" style="margin-top:16px">
-      <section class="panel" style="margin:0">${timelineHTML(m)}</section>
-      <section class="panel" style="margin:0">${causesHTML(m, explanation)}</section>
-    </div>
-    <section class="panel">${signalsHTML(m)}</section>
-    ${isLive ? `<section class="panel">${similarHTML(m, matches, a)}</section>` : ""}
-    ${isLive ? "" : `<section class="panel">${resolutionHTML(m, matches)}</section>`}
-    <section class="panel">${evidenceHTML(m)}</section>`;
+    ${isLive ? "" : `<section class="panel resolution-panel">${resolutionHTML(m, matches)}</section>`}
+    ${disclosurePanel("Investigation details", "Timeline, suspected causes, and observed signals", investigation)}
+    ${isLive ? disclosurePanel("Pattern comparison", "Chart and every similar incident with the full five-factor score", comparison) : ""}
+    <section class="panel evidence-panel">${evidenceHTML(m)}</section>`;
+}
+
+function disclosurePanel(title, description, body) {
+  return `<details class="panel disclosure analysis-disclosure">
+    <summary><span><b>${title}</b><small>${description}</small></span></summary>
+    <div class="disclosure-body">${body}</div>
+  </details>`;
 }
 
 function sourcesNotice(a) {
@@ -353,20 +383,24 @@ function heroHTML(m, matches, a) {
   }
   const top = matches[0];
   if (isExact(top)) return exactHeroHTML(top);
+  const highlights = top.breakdown.filter((b) => !b.omitted && b.value >= 0.999).slice(0, 3);
   return `<section class="hero" style="margin-top:16px">
+    <span class="eyebrow">Closest historical match</span>
     <div class="headline">
       <span class="score">${top.score}%</span>
       <span>similar to <a href="#/incidents/${esc(top.incident_id)}"><b>${esc(top.incident_id)}</b></a> — ${esc(top.title)}
         <span class="faint small">· ${esc(fmtDateTime(top.started_at))} · ${sourceBadge(top.source_type)}</span></span>
     </div>
-    <div class="muted"><b>Pattern similarity:</b> different cause, similar failure pattern.</div>
+    <div class="muted">Different cause, similar failure pattern.</div>
     ${top.shared_sequence?.length ? `<div class="shared-pattern">Shared pattern: <b>${esc(sharedPattern(top.shared_sequence, 6, true))}</b></div>` : ""}
-    <div class="grid-2" style="gap:20px">
+    <div class="hero-grid">
       <div>
-        <h3 style="margin-bottom:6px">Why ${top.score}% similar?</h3>
-        ${whyList(top.breakdown)}
-        ${top.differences?.length ? `<h3 style="margin:12px 0 6px">What is different</h3>
-          <ul class="why">${top.differences.map((d) => `<li><span class="why-icon" style="color:var(--text-2)">≠</span><span class="small">${esc(d)}</span></li>`).join("")}</ul>` : ""}
+        <div class="key-points">${highlights.map((b) => `<span><i>✓</i>${esc(b.label)}</span>`).join("")}</div>
+        <details class="hero-details"><summary>Why ${top.score}% similar, and what is different</summary>
+          <div class="hero-details-body">${whyList(top.breakdown)}
+          ${top.differences?.length ? `<h3>What is different</h3>
+            <ul class="why">${top.differences.map((d) => `<li><span class="why-icon" style="color:var(--text-2)">≠</span><span class="small">${esc(d)}</span></li>`).join("")}</ul>` : ""}</div>
+        </details>
       </div>
       ${lastTimeHTML(top)}
     </div>
@@ -376,19 +410,22 @@ function heroHTML(m, matches, a) {
 
 function exactHeroHTML(top) {
   return `<section class="hero exact" style="margin-top:16px">
+    <span class="eyebrow">Closest historical match</span>
     <div class="headline">
       <span class="score exact-label">Exact recurrence</span>
       <span>of <a href="#/incidents/${esc(top.incident_id)}"><b>${esc(top.incident_id)}</b></a>, the previous occurrence
         <span class="faint small">· ${esc(fmtDateTime(top.started_at))} · ${esc(fmtGap(top.minutes_earlier))} · ${sourceBadge(top.source_type)}</span></span>
     </div>
     <div><b>Recurrence score: ${top.score}%</b> <span class="muted">· the same production failure pattern recurring over time</span></div>
-    <div class="grid-2" style="gap:20px">
+    <div class="hero-grid">
       <div>
-        <h3 style="margin-bottom:6px">Reasons</h3>
-        <ul class="why">${top.exact_reasons.map((r) => `<li><span class="why-icon" style="color:var(--good)">✓</span><span>${esc(r)}</span></li>`).join("")}</ul>
-        ${top.differences?.length ? `<h3 style="margin:12px 0 6px">What differed this time</h3>
-          <ul class="why">${top.differences.map((d) => `<li><span class="why-icon" style="color:var(--text-2)">≠</span><span class="small">${esc(d)}</span></li>`).join("")}</ul>` : ""}
-        <details style="margin-top:10px"><summary class="small">Score breakdown (five documented factors)</summary>${whyList(top.breakdown)}</details>
+        <div class="key-points">${top.exact_reasons.slice(0, 3).map((r) => `<span><i>✓</i>${esc(r)}</span>`).join("")}</div>
+        <details class="hero-details"><summary>Reasons, differences, and score breakdown</summary>
+          <div class="hero-details-body"><ul class="why">${top.exact_reasons.map((r) => `<li><span class="why-icon" style="color:var(--good)">✓</span><span>${esc(r)}</span></li>`).join("")}</ul>
+          ${top.differences?.length ? `<h3>What differed this time</h3>
+            <ul class="why">${top.differences.map((d) => `<li><span class="why-icon" style="color:var(--text-2)">≠</span><span class="small">${esc(d)}</span></li>`).join("")}</ul>` : ""}
+          <h3>Score breakdown</h3>${whyList(top.breakdown)}</div>
+        </details>
       </div>
       ${lastTimeHTML(top)}
     </div>
@@ -674,7 +711,11 @@ function bindCommon(m) {
   app.querySelectorAll(".ev").forEach((b) => b.addEventListener("click", () => {
     const row = document.getElementById(`ev-${b.dataset.ev}`);
     if (!row) return;
-    row.closest("details").open = true;
+    let parent = row.closest("details");
+    while (parent) {
+      parent.open = true;
+      parent = parent.parentElement.closest("details");
+    }
     row.scrollIntoView({ behavior: "smooth", block: "center" });
     row.classList.remove("flash");
     void row.offsetWidth;
