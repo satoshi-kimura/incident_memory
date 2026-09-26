@@ -90,7 +90,7 @@ The decisions that shaped the product were made by the builder:
 | **The core demo message.** Rejected a 96 % match against a near-identical incident as "looks staged". Asked for a *different cause with a similar degradation pattern* at about 80 %, plus "why similar", "what is different" and "what happened last time" | Reworked the demo workload and history. The unchanged algorithm now scores 82 %. New UI sections |
 | **Data consistency review.** Asked that Started always mean the alarm time, that OPEN not carry an end time, that evidence IDs follow time order, and that alarms agree with thresholds, each backed by automated tests | Fixes plus `tests/test_consistency.py` |
 | **No production data.** Chose to build comparison incidents in the isolated demo environment instead of sanitizing real production incidents; all demo data is labeled | Controlled incident runs with real CloudWatch and CloudTrail evidence; seeded history labeled fictional |
-| **Every infrastructure change approved.** Read the plan summary and approved each `terraform apply` | Planned, checked, applied, verified on the public URL |
+| **Infrastructure changes approved.** Authorized the initial deployment; for later changes, read the plan summary and approved each `terraform apply` | Planned, ran the plan gate, applied, verified on the public URL |
 | **Agent connection.** Connected the coding agent to AWS with the Agent Toolkit for AWS, through a dedicated IAM user limited to the project's resources | Used the AWS MCP Server for AWS operations |
 
 The agent also found and fixed its own mistakes during verification (a demo escalation bug, an earlier episode
