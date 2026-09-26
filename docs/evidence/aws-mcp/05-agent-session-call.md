@@ -49,3 +49,25 @@ to `incident-memory-*` resources in us-east-1. All four calls were read-only.
 The agent then used `aws___run_script` again to query CloudTrail (`LookupEvents`,
 `EventSource = aws-mcp.amazonaws.com`). The result listed the earlier `CallReadWriteTool` and
 `DestroySession` events from the MCP server; see `04-cloudtrail-aws-mcp-events.txt`.
+
+## Repeat for the English screenshot (2026-09-26 08:34 UTC)
+
+The same kind of read-only call was repeated in an English-only agent turn for `screenshots/05-agent-calling-aws-mcp.png`
+(tool `mcp__aws-mcp__aws___run_script`). Result, verbatim:
+
+```json
+{"status":"success","stdout":"",
+ "return_value":{
+   "caller":"user/sandbox",
+   "lambda_functions":["incident-memory-api","incident-memory-demo-orders-api","incident-memory-demo-scenario"],
+   "incident_memory_table":{"name":"incident-memory-incidents","status":"ACTIVE"},
+   "demo_alarms":{"incident-memory-demo-orders-api-errors-high":"OK",
+                  "incident-memory-demo-orders-api-latency-high":"OK",
+                  "incident-memory-demo-orders-api-throttles-high":"OK"},
+   "http_api":["incident-memory-api"]},
+ "api_calls":[{"service":"sts","operation":"GetCallerIdentity","status":"success"},
+              {"service":"lambda","operation":"ListFunctions","status":"success","n_items":{"Functions":3}},
+              {"service":"dynamodb","operation":"DescribeTable","status":"success"},
+              {"service":"cloudwatch","operation":"DescribeAlarms","status":"success","n_items":{"MetricAlarms":3,"CompositeAlarms":0,"LogAlarms":0}},
+              {"service":"apigatewayv2","operation":"GetApis","status":"success","n_items":{"Items":1}}]}
+```

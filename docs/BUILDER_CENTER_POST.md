@@ -6,7 +6,7 @@ Copy the sections below into the AWS Builder Center project page.
 - **Tags:** `#commercial-potential` `#startups`
 - **Live app:** https://d2zs12dmk7373h.cloudfront.net
 - **Cover image:** `evidence/screenshots/03-incident-analysis-light.png` (crop the top: score, "Why 82% similar?", "What happened last time?")
-- **Images in the body:** `architecture.png`, `evidence/screenshots/01-dashboard.png`, `evidence/screenshots/03-incident-analysis-light.png`, `evidence/screenshots/07-claude-code-mcp-aws-connected.png`
+- **Images in the body:** `architecture.png`, `evidence/screenshots/01-dashboard.png`, `evidence/screenshots/03-incident-analysis-light.png`, `evidence/screenshots/05-agent-calling-aws-mcp.png`, `evidence/screenshots/07-claude-code-mcp-aws-connected.png`
 
 ---
 
@@ -120,6 +120,8 @@ Proof of the AWS connection: the `/mcp` panel showing the AWS MCP Server connect
 `aws___run_script`, and CloudTrail events from `aws-mcp.amazonaws.com` recorded by AWS itself.
 
 *[image: 07-claude-code-mcp-aws-connected.png]*
+
+*[image: 05-agent-calling-aws-mcp.png]*
 
 ### Why this can be a business (Startups lane)
 
