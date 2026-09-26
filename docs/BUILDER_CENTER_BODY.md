@@ -1,4 +1,5 @@
 **Live app (no login):** https://d2zs12dmk7373h.cloudfront.net
+**Evidence:** https://d2zs12dmk7373h.cloudfront.net/evidence.html
 **Category:** Commercial potential · **Track:** Startup
 
 > Incident Memory turns an AWS alarm into an answer: what changed, which past failure matches, and what worked last time.
@@ -19,15 +20,11 @@ Real data too: a sanitized production DB alarm recurred 27 times in 6 days. With
 
 Monitoring shows what is happening now. Incident Memory remembers what worked last time: long-term memory, beyond the 7–90 days CloudWatch investigations keeps.
 
-[image: incident analysis]
-
 ### How it works
 - CloudFront, S3, API Gateway, Lambda, DynamoDB, CloudWatch, CloudTrail, Bedrock (Nova 2 Lite)
 - Similarity is deterministic (5 documented factors). AI never sets the score.
 - Bedrock explains; every cause must cite evidence IDs, else "Insufficient evidence".
 - Read-only AWS workload access, least-privilege IAM, isolated demo environment.
-
-[image: architecture]
 
 ### How the coding agent helped
 Claude Code connected to AWS through the Agent Toolkit for AWS, using a dedicated IAM user.
@@ -35,13 +32,11 @@ Claude Code connected to AWS through the Agent Toolkit for AWS, using a dedicate
 - I rejected a 96% match as "looks staged"; the agent reworked the demo into a different-cause story (82%).
 - It ran real incidents in AWS, verified the live URL and fixed its own bugs; I approved infra changes.
 
-Proof: /mcp panel, an agent AWS MCP call and its CloudTrail events.
-
-[image: /mcp panel] [image: agent calling AWS MCP]
+Proof (evidence link): the /mcp panel shows aws-mcp connected; the agent called aws___run_script read-only; CloudTrail logged the calls from aws-mcp.amazonaws.com.
 
 ### Why a business
 Built by Satoshi Kimura, founder of ENOXA. Running Gatepath on AWS, I kept re-investigating the same alarms. Next: read-only cross-account onboarding, automatic memories and team insights. Incident Memory is standalone and reads no Gatepath data.
 
 Labels: LIVE/CAPTURED DEMO = real AWS evidence from an isolated demo; CAPTURED REAL-WORLD = sanitized production data; SEEDED = fictional.
 
-#commercial-potential #startup
+#commercial-potential #startups

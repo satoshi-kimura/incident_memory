@@ -250,13 +250,14 @@ resource "aws_s3_bucket_ownership_controls" "web" {
 }
 
 resource "aws_s3_object" "web" {
-  for_each      = { for f in ["index.html", "app.js", "styles.css"] : f => f }
+  # Every file under frontend/ (app, styles, evidence page and its images)
+  for_each      = fileset(local.web_dir, "**/*.{html,js,css,png}")
   bucket        = aws_s3_bucket.web.id
   key           = each.value
   source        = "${local.web_dir}/${each.value}"
   etag          = filemd5("${local.web_dir}/${each.value}")
-  content_type  = lookup({ html = "text/html; charset=utf-8", js = "text/javascript; charset=utf-8", css = "text/css; charset=utf-8" }, reverse(split(".", each.value))[0])
-  cache_control = each.value == "index.html" ? "no-cache" : "max-age=300"
+  content_type  = lookup({ html = "text/html; charset=utf-8", js = "text/javascript; charset=utf-8", css = "text/css; charset=utf-8", png = "image/png" }, reverse(split(".", each.value))[0])
+  cache_control = endswith(each.value, ".html") ? "no-cache" : "max-age=300"
 }
 
 resource "aws_cloudfront_origin_access_control" "web" {

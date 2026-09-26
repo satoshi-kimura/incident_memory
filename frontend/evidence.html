@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Incident Memory · Evidence</title>
+  <meta name="description" content="Evidence for the Incident Memory hackathon submission: coding agent connected to AWS through the AWS MCP Server, screenshots of the live app, and the architecture.">
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    figure { margin: 12px 0 20px; }
+    figure img { max-width: 100%; border: 1px solid var(--border); border-radius: var(--radius); display: block; }
+    figcaption { font-size: 13px; color: var(--text-2); margin-top: 6px; }
+    code { background: var(--surface-2); padding: 0 4px; border-radius: 3px; }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <a class="brand" href="./">Incident Memory</a>
+      <span class="tagline">Evidence for the AWS Zero to Shipped submission</span>
+    </div>
+  </header>
+  <main>
+    <section class="intro">
+      <h1>Evidence</h1>
+      <p>Live app: <a href="https://d2zs12dmk7373h.cloudfront.net">https://d2zs12dmk7373h.cloudfront.net</a> ·
+      Category: Commercial potential · Track: Startups. All screenshots are sanitized: no account IDs, ARNs or
+      production resource names.</p>
+    </section>
+
+    <section class="panel">
+      <h2>1. Coding agent connected to AWS</h2>
+      <p>Built with <b>Claude Code</b>, connected to AWS through the <b>Agent Toolkit for AWS</b> (AWS MCP Server),
+      using a dedicated IAM user limited to the project's <code>incident-memory-*</code> resources in us-east-1.</p>
+      <figure><img src="evidence/mcp-connected.png" alt="Claude Code /mcp panel showing aws-mcp connected with 8 tools">
+        <figcaption>Claude Code <code>/mcp</code> panel: <b>aws-mcp ✔ 8 tools</b> (user MCP server).</figcaption></figure>
+      <figure><img src="evidence/agent-calling-aws-mcp.png" alt="The agent calling aws-mcp aws___run_script with read-only AWS API calls">
+        <figcaption>The agent calling <code>aws-mcp - aws___run_script</code> with read-only calls (GetCallerIdentity,
+        ListFunctions, DescribeTable, DescribeAlarms, GetApis). Result: caller <code>user/sandbox</code>; Lambda functions
+        <code>incident-memory-api</code>, <code>incident-memory-demo-orders-api</code>, <code>incident-memory-demo-scenario</code>;
+        table <code>incident-memory-incidents</code> ACTIVE; 3 demo alarms OK; HTTP API <code>incident-memory-api</code>.</figcaption></figure>
+      <p><b>AWS-side record:</b> CloudTrail logged the agent's MCP calls with <code>eventSource: aws-mcp.amazonaws.com</code>
+      (<code>CallReadWriteTool</code>, <code>DestroySession</code>) and user agent <code>mcp-proxy-for-aws/1.7.0</code>.</p>
+      <p><b>How it was used:</b> the agent designed and built the backend, UI, tests and Terraform (about 40 resources),
+      ran every <code>terraform plan</code> through a safety gate that blocks changes outside the project, ran controlled
+      incidents in AWS, and verified the live URL. The builder wrote the specification, reviewed the demo and approved
+      infrastructure changes.</p>
+    </section>
+
+    <section class="panel">
+      <h2>2. The live app</h2>
+      <figure><img src="evidence/dashboard.png" alt="Dashboard">
+        <figcaption>Dashboard: a demo incident with its closest historical match (82 %, different cause, similar failure
+        pattern) and 27 captured real-world recurrences of one production alarm (exact recurrence).</figcaption></figure>
+      <figure><img src="evidence/pattern-similarity.png" alt="Incident analysis with 82 percent pattern similarity">
+        <figcaption>Pattern similarity: a real Lambda configuration change (CloudTrail) followed by errors, latency and a
+        latency alarm (CloudWatch) matches a seeded historical scenario at 82 %. Why it matches, what is different, and
+        what happened last time.</figcaption></figure>
+      <figure><img src="evidence/exact-recurrence.png" alt="Exact recurrence in captured real-world data">
+        <figcaption>Exact recurrence: a sanitized production database free-memory alarm cycle matches the previous
+        occurrence (recurrence score 100 %: same alarm type, metric, threshold behavior and recovery). Cause: insufficient
+        evidence. No resolution recorded.</figcaption></figure>
+    </section>
+
+    <section class="panel">
+      <h2>3. Architecture</h2>
+      <figure><img src="evidence/architecture.png" alt="Architecture diagram">
+        <figcaption>CloudFront + S3, API Gateway, Lambda, DynamoDB, CloudWatch, CloudTrail and Amazon Bedrock in us-east-1.
+        Similarity is calculated by the application; Bedrock only explains. AWS workload access is read-only.</figcaption></figure>
+    </section>
+  </main>
+</body>
+</html>
