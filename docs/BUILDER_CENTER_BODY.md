@@ -2,13 +2,11 @@
 **Evidence:** [https://d2zs12dmk7373h.cloudfront.net/evidence.html](https://d2zs12dmk7373h.cloudfront.net/evidence.html)  
 **Category:** Commercial potential · **Track:** Startup
 
-> Incident Memory turns an AWS alarm into an answer: what changed, which past failure matches, and what worked last time.
-
 ### Problem
-Monitoring tells you something is wrong. The costly part comes next: reconstructing what changed, finding a similar past failure, and recovering the resolution buried in someone’s head, chat history, or an old postmortem.
+Monitoring tells you something is wrong. The costly part comes next: reconstructing what changed, finding a similar past failure, and recovering the fix buried in chat history or old postmortems.
 
 ### What it does
-Incident Memory collects CloudWatch and CloudTrail evidence around an alarm, reconstructs a timeline, stores the incident as structured memory in DynamoDB, and compares it with past incidents.
+Incident Memory collects CloudWatch and CloudTrail evidence around an alarm, reconstructs a timeline, stores it in DynamoDB, and compares it with past incidents.
 
 In the featured demo, real AWS evidence reconstructs a Lambda configuration change followed by **errors → latency → concurrency → alarm**. It matches seeded incident INC-0012 at **82% similarity**. Different cause (a DB connection pool change), similar degradation pattern. It explains the match and shows what happened last time: the suspected cause, rollback, and **14-minute recovery**.
 
@@ -34,7 +32,5 @@ Claude Code connected to AWS through the Agent Toolkit for AWS.
 I built Incident Memory after repeatedly investigating the same alarms while operating Gatepath on AWS. Next: read-only cross-account onboarding, automatic incident memories, and team insights.
 
 It is standalone and reads no Gatepath data.
-
-**Data labels:** LIVE/CAPTURED DEMO = real AWS demo evidence; CAPTURED REAL-WORLD = sanitized production data; SEEDED = fictional.
 
 #commercial-potential #startups
