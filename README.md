@@ -6,7 +6,7 @@ Live demo: **https://d2zs12dmk7373h.cloudfront.net** (no login, no AWS credentia
 
 AWS Zero to Shipped Hackathon · Category: **Commercial potential** · Lane: **Startup**
 
-> Incident Memory turns an AWS alarm into an answer: what changed, which past failure matches, and what worked last time. In the featured demo, real CloudWatch and CloudTrail evidence matches a different-cause incident at 82%, surfacing the previous rollback and 14-minute recovery.
+> Incident Memory turns an AWS alarm into an answer: what changed, which past failure matches, and what worked last time. In the featured demo, captured CloudWatch and CloudTrail evidence matches a seeded, different-cause historical incident at 82%, surfacing the previous rollback and 14-minute recovery.
 
 ---
 
@@ -72,7 +72,7 @@ last time and how long recovery took**.
   dropped, and *Insufficient evidence* is a valid answer.
 - **Read-only and isolated.** Two layers: least-privilege IAM plus an application allowlist.
   No remediation and no AWS changes from the public app.
-- **Costs nothing when idle.** Serverless only. Bedrock results are cached by evidence fingerprint and capped per day.
+- **No always-on compute; idle infrastructure cost is minimal.** Serverless only. Bedrock results are cached by evidence fingerprint and capped per day.
 
 ## Try the demo (60 seconds)
 

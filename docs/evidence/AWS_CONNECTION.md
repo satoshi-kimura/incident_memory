@@ -7,7 +7,11 @@ Rule: *"A coding agent connected to the AWS console, with documented proof of th
 **Connection:** Agent Toolkit for AWS. It provides the **AWS MCP Server**
 (`https://aws-mcp.us-east-1.api.aws/mcp`, through `mcp-proxy-for-aws`) plus the AWS agent skills
 (aws-serverless, aws-iam, aws-observability, amazon-bedrock, …), registered in Claude Code.
-**AWS account:** AWS account (ID masked), region us-east-1, IAM identity `user/terraform`.
+**AWS account:** AWS account (ID masked), region us-east-1.
+**IAM identity:** the first connection checks (sections 3 and 4, 2026-09-25 15:51 UTC) ran as the
+account's existing IAM user `user/terraform`. Minutes later the project switched to its dedicated,
+least-privilege IAM user `user/sandbox` (limited to `incident-memory-*` in us-east-1), which made the
+in-session call in section 5 (about 16:05 UTC) and all later agent work.
 
 ## 1. The MCP server is registered in the coding agent
 
@@ -33,7 +37,8 @@ aws-mcp:
 
 `aws-mcp/03-run-script-readonly.txt` (script: `aws-mcp/mcp_call.py`). The agent called
 `aws___run_script` with read-only APIs (GetCallerIdentity, ListFunctions, DescribeTable,
-DescribeAlarms). It returned the live Incident Memory resources:
+DescribeAlarms). It ran as `user/terraform`, before the switch to the dedicated user, and returned
+the live Incident Memory resources:
 
 ```json
 {
@@ -54,7 +59,7 @@ independent, AWS-side proof of the agent's MCP connection to the account.
 ## 5. The agent calls the MCP tool directly in its session
 
 `aws-mcp/05-agent-session-call.md`. Inside the Claude Code session, the agent called the tool
-**`aws-mcp - aws___run_script`**. It ran as the project's dedicated IAM user `user/sandbox`
+**`aws-mcp - aws___run_script`**. It ran as the project's dedicated IAM user `user/sandbox`, after the switch,
 (limited to `incident-memory-*` in us-east-1), returned the Incident Memory resources, and then
 queried CloudTrail through the same tool.
 
