@@ -11,3 +11,6 @@ infra/terraform.tfvars
 infra/backend.hcl
 infra/tfplan
 infra/plan.txt
+
+# Local agent notes with account-specific values
+CLAUDE.local.md
