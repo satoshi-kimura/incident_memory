@@ -1,42 +1,55 @@
-**Live app:** [https://d2zs12dmk7373h.cloudfront.net](https://d2zs12dmk7373h.cloudfront.net)
-**Evidence:** [https://d2zs12dmk7373h.cloudfront.net/evidence.html](https://d2zs12dmk7373h.cloudfront.net/evidence.html)
-**Category:** Commercial potential · **Track:** Startup
+* **Live app:** https://d2zs12dmk7373h.cloudfront.net
+* **Evidence:** https://d2zs12dmk7373h.cloudfront.net/evidence.html
+* **Category:** Commercial potential · **Track:** Startup
 
-### Problem
+## From an alarm to an answer
 
-Monitoring tells you something is wrong. The costly part comes next: reconstructing what changed, finding a similar past failure, and recovering the resolution buried in someone’s head, chat history, or an old postmortem.
+Monitoring tells us that something is wrong. The expensive part comes next: reconstructing what changed, finding a similar past failure, and recovering the resolution buried in someone's memory, a chat thread, or an old postmortem.
 
-### What it does
+I built **Incident Memory** to make that process repeatable.
 
-Incident Memory collects CloudWatch and CloudTrail evidence around an alarm, reconstructs a timeline, stores the incident as structured memory in DynamoDB, and compares it with past incidents.
+When an AWS alarm occurs, Incident Memory collects evidence from CloudWatch and CloudTrail, reconstructs a timeline, stores the incident as structured memory, and compares it with previous incidents.
 
-In the featured demo, real AWS evidence reconstructs a Lambda configuration change followed by **errors → latency → concurrency → alarm**. Incident Memory finds seeded incident INC-0012 at **82% similarity**. Its cause is different—a DB connection pool change—but the degradation pattern is similar. The app explains why they match and shows what happened last time: the suspected cause, rollback, and **14-minute recovery**.
+The goal is simple:
 
-It also shows exact recurrence with sanitized production data: the same database free-memory alarm recurred **27 times over five days**. With no confirmed cause or fix in the source data, the app reports **“Insufficient evidence”** and **“No resolution recorded.”**
+**What changed? Have we seen this before? What worked last time?**
 
-**Monitoring shows what is happening now. Incident Memory remembers what worked last time.**
+## How it works
 
-### How it works
+Each event around the alarm gets an evidence ID. The incident record holds the timeline, symptoms, changes, and any resolution.
 
-* AWS: CloudFront, S3, API Gateway, Lambda, DynamoDB, CloudWatch, CloudTrail, Bedrock (Nova 2 Lite)
-* Similarity is deterministic across five factors; AI never sets the score.
-* Bedrock explains results; suspected causes must cite evidence IDs.
-* AWS workload access is read-only with least-privilege IAM.
+Past incidents are stored in DynamoDB and compared using five documented similarity factors.
 
-### How the coding agent helped
+The similarity score is deterministic. AI does not decide the score.
 
-Claude Code connected to AWS through the Agent Toolkit for AWS.
+Amazon Bedrock explains the result; its claims must cite evidence IDs.
 
-* I wrote the specification and safety rules; the agent built the app, tests, and Terraform.
-* I rejected an initial **96% match** because it looked staged; the agent reworked it into an explainable **82% different-cause match**.
-* The agent created controlled AWS incidents, verified deployment, and fixed implementation issues. I approved infrastructure changes.
+## Demo
 
-**Proof:** the evidence page shows `/mcp` with `aws-mcp` connected, read-only `aws___run_script` calls, and CloudTrail events from `aws-mcp.amazonaws.com`.
+In the demo scenario, Incident Memory reconstructs a sequence involving a Lambda configuration change, errors, increased latency, concurrency changes, and the resulting alarm.
 
-### Commercial potential
+It finds a seeded past incident, **INC-0012**, with an **82% similarity score**, and surfaces the previous rollback and recovery information.
 
-I built Incident Memory after repeatedly investigating the same alarms while operating Gatepath on AWS. Next: read-only cross-account onboarding, automatic incident memories, and team insights.
+I also tested the model against sanitized operational data from a recurring database memory alarm. That alarm occurred **27 times in five days**, but the historical records contained insufficient evidence and no recorded resolution.
 
-Incident Memory is standalone and does not read Gatepath data.
+Memory only helps if what happened and what fixed it are preserved. Incident Memory makes that automatic.
 
-\#commercial-potential #startups
+## AWS architecture
+
+Amazon CloudFront, S3, API Gateway, Lambda, DynamoDB, CloudWatch, CloudTrail, and Amazon Bedrock (Nova 2 Lite).
+
+AWS access is read-only and designed around least-privilege IAM. The demo environment is isolated from production systems.
+
+Incident Memory is a standalone application and does not read data from Gatepath.
+
+## From zero to shipped
+
+I built it with **Claude Code connected to AWS through the Agent Toolkit for AWS** (AWS MCP Server). I wrote the specification and safety rules; the agent built the app, tests, and Terraform, ran controlled AWS incidents, and verified the deployment. I approved infrastructure changes.
+
+**Proof** (evidence page): `aws-mcp` connected in `/mcp`, read-only `aws___run_script` calls, and CloudTrail events from `aws-mcp.amazonaws.com`.
+
+The focus is the gap **after** monitoring detects a problem: preserving what worked so the next incident starts from the last one.
+
+Next: read-only cross-account onboarding, automatic incident memories, and team insights.
+
+**Built by Satoshi Kimura, founder of ENOXA.**
